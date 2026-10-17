@@ -88,6 +88,7 @@ const eventCards = Array.from(document.querySelectorAll('.event-card'));
 const eventDetailsPanel = document.querySelector('#event-details-panel');
 const eventRecordGroups = eventDetailsPanel.querySelector('.event-record-groups');
 const eventRecordsEmpty = eventDetailsPanel.querySelector('.event-records-empty');
+const eventRecordStatus = eventDetailsPanel.querySelector('.event-record-status');
 const eventDisciplineMap = {
   sprints: ['100m', '200m', '400m'],
   distance: ['800m', '1500m', '5000m'],
@@ -96,87 +97,60 @@ const eventDisciplineMap = {
   jumps: ['Long Jump', 'Triple Jump', 'High Jump', 'Pole Vault'],
   throws: ['Shot Put', 'Discus', 'Javelin', 'Hammer'],
 };
-const eventRecordData = {
-  boys: {
-    interIit: [
-      { event: '100m', athlete: 'Shivam Singh', year: '2019', college: 'IIT Kharagpur', performance: '10.8s' },
-      { event: '100m', athlete: 'Pawan Dahiya', year: '2017', college: 'IIT Bombay', performance: '10.8s' },
-      { event: '100m', athlete: 'Dileep Pudi', year: '2016', college: 'IIT Delhi', performance: '10.8s' },
-      { event: '200m', athlete: 'Pawan Dahiya', year: '2017', college: 'IIT Bombay', performance: '22.0s' },
-      { event: '400m', athlete: 'Pawan Dahiya', year: '2017', college: 'IIT Bombay', performance: '49.1s' },
-      { event: '800m', athlete: 'Dileep Pudi', year: '2017', college: 'IIT Delhi', performance: '1:56.4s' },
-      { event: '1500m', athlete: 'C George', year: '1980', college: 'IIT Madras', performance: '4:04.3s' },
-      { event: '5000m', athlete: 'Narendra Kumar Khichar', year: '2019', college: 'IIT Kharagpur', performance: '16:06.2s' },
-      { event: '110m H', athlete: 'Narendra Kumar', year: '1972', college: 'IIT Madras', performance: '15.6s' },
-      { event: '400m H', athlete: 'Narendra Kumar', year: '1972', college: 'IIT Madras', performance: '56.0s' },
-      { event: 'Long Jump', athlete: 'Saurabhdeep Singh Deopuri', year: '2018', college: 'IIT Delhi', performance: '6.75m' },
-      { event: 'Triple Jump', athlete: 'Shubham Yadav', year: '2019', college: 'IIT Delhi', performance: '14.16m' },
-      { event: 'High Jump', athlete: 'CK Soorya', year: '2024', college: 'IIT Guwahati', performance: '1.95m' },
-      { event: 'Pole Vault', athlete: 'Gaurav Yadav', year: '2025', college: 'IIT Madras', performance: '4.00m' },
-      { event: 'Shot Put', athlete: 'Dalit Singh', year: '1973', college: 'IIT Delhi', performance: '13.33m' },
-      { event: 'Discus', athlete: 'Ankit Lakhlan', year: '2022', college: 'IIT Roorkee', performance: '40.97m' },
-      { event: 'Javelin', athlete: 'Amgoth Ganesh', year: '2025', college: 'IIT Roorkee', performance: '57.07m' },
-      { event: 'Hammer', athlete: 'Aman Pal', year: '2017', college: 'IIT Roorkee', performance: '45.3m' },
-      { event: '4×100m Relay', athlete: 'Gnaneshwar Munoth · Md Zaid · Indrajeet Kumar · Rohan N', year: '2025', college: 'IIT Kharagpur', performance: '43.17s' },
-      { event: '4×400m Relay', athlete: 'Ainsley Fernandes · Shlok Rathi · Raj Singh Yadav · Amit Kumar', year: '2025', college: 'IIT Bombay', performance: '3:24.60s' },
-    ],
-    institute: [
-      { event: '100m', athlete: 'Deepak Jorwal (Y14)', competition: "Inter IIT'17", college: 'IIT Madras', performance: '11.0s' },
-      { event: '200m', athlete: 'Neeli Ajay Chandra (Y16)', competition: "Inter IIT'19", college: 'IIT Kharagpur', performance: '22.3s' },
-      { event: '400m', athlete: 'Neeli Ajay Chandra (Y16)', competition: "Inter IIT'19", college: 'IIT Kharagpur', performance: '49.6s' },
-      { event: '800m', athlete: 'Jaswinder Singh (Y15)', competition: "Inter IIT'17", college: 'IIT Madras', performance: '1:56.9s' },
-      { event: '1500m', athlete: 'Jaswinder Singh (Y15)', competition: "Udghosh'17", college: 'IIT Kanpur', performance: '4:16.00s' },
-      { event: '5000m', athlete: 'Dhananjay De (Y19)', competition: "Inter IIT'24", college: 'IIT Indore', performance: '16:09.43s' },
-      { event: '110m H', athlete: 'Yuvraj Singh Khare (Y21)', competition: "Udghosh'25", college: 'IIT Kanpur', performance: '15.69s' },
-      { event: '400m H', athlete: 'Akshat Verma', competition: "Spardha'15", college: 'IIT BHU', performance: '57.0s' },
-      { event: 'Long Jump', athlete: 'M Surya Prakash', competition: "Udghosh'14", college: 'IIT Kanpur', performance: '6.43m' },
-      { event: 'Triple Jump', athlete: 'Akshat Verma', competition: "Udghosh'15", college: 'IIT Kanpur', performance: '13.51m' },
-      { event: 'High Jump', athlete: 'Lokesh Yadav (Y14)', competition: "Inter IIT'18", college: 'IIT Guwahati', performance: '1.84m' },
-      { event: 'Pole Vault', athlete: 'Sagar Yadav (Y14)', competition: "Inter IIT'17", college: 'IIT Madras', performance: '3.70m' },
-      { event: 'Shot Put', athlete: 'Shubham Yadav (Y12)', competition: "Sportech'16", college: 'IIT Delhi', performance: '12.3m' },
-      { event: 'Discus', athlete: 'Balamurugan Ganesan', competition: "Inter IIT'18", college: 'IIT Guwahati', performance: '36.5m' },
-      { event: 'Javelin', athlete: 'Shivam Kumar', competition: "Inter IIT'14", college: 'IIT Bombay', performance: '55.54m' },
-      { event: 'Hammer', athlete: 'Shubham Yadav (Y12)', competition: "Sportech'16", college: 'IIT Delhi', performance: '42m' },
-      { event: '4×100m Relay', athlete: 'Neeli Ajay Chandra (Y16) · Mohit · Deepak Jorwal (Y14) · Pranav', competition: "Inter IIT'17", college: 'IIT Madras', performance: '43.75s' },
-      { event: '4×400m Relay', athlete: 'Sachin Nehra (Y18) · Abhijeet (Y17) · Bhaskar Lamba (Y18) · Neeli Ajay Chandra (Y16)', competition: "Inter IIT'19", college: 'IIT Kharagpur', performance: '3:24.8s' },
-    ],
-  },
-  girls: {
-    interIit: [
-      { event: '100m', athlete: 'Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '13.12s' },
-      { event: '200m', athlete: 'Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '27.49s' },
-      { event: '400m', athlete: 'Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '1:01.75s' },
-      { event: '800m', athlete: 'Lavanya', year: '2024', college: 'IIT Roorkee', performance: '2:26.11s' },
-      { event: '1500m', athlete: 'Lavanya', year: '2024', college: 'IIT Roorkee', performance: '5:20.32s' },
-      { event: '100m H', athlete: 'Saga Biju Lona', year: '2025', college: 'IIT Madras', performance: '18.50s' },
-      { event: 'Long Jump', athlete: 'Karishma Singh', year: '2025', college: 'IIT Kanpur', performance: '4.99m' },
-      { event: 'High Jump', athlete: 'Karunya Bhaskar', year: '2017', college: 'IIT Bombay', performance: '1.41m' },
-      { event: 'Shot Put', athlete: 'Anjali Kumari', year: '2023', college: 'IIT Delhi', performance: '10.23m' },
-      { event: 'Discus', athlete: 'Anjali Kumari', year: '2023', college: 'IIT Delhi', performance: '35.26m' },
-      { event: 'Javelin', athlete: 'Tanuja Painkra', year: '2024', college: 'IIT Guwahati', performance: '28.51m' },
-      { event: '4×100m Relay', athlete: 'Biri Yachu · Jangili Poojitha · Paligiri Meghana · Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '54.35s' },
-      { event: '4×400m Relay', athlete: 'Biri Yachu · Paligiri Meghana · Jangili Poojitha · Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '4:21.78s' },
-      { event: '4×400m Mixed Relay', athlete: 'Indrajeet Kumar · Poojitha Jangili · Gnaneshwar Munoth · Sanjana Reddy', year: '2025', college: 'IIT Kharagpur', performance: '3:49.44s' },
-    ],
-    institute: [
-      { event: '100m', athlete: 'Karishma Singh (Y24)', competition: "Sportech'26", college: 'IIT Delhi', performance: '13.66s' },
-      { event: '200m', athlete: 'Mutyala Devi (Y12)', competition: "Inter IIT'13", college: 'IIT Guwahati', performance: '28.1s' },
-      { event: '400m', athlete: 'Mutyala Devi (Y12)', competition: "Inter IIT'13", college: 'IIT Guwahati', performance: '1:07.2s' },
-      { event: '800m', athlete: 'Asha Burdak (Y15)', competition: "Inter IIT'17", college: 'IIT Madras', performance: '2:42.0s' },
-      { event: '1500m', athlete: 'Meghna Jakhar (Y18)', competition: "Inter IIT'19", college: 'IIT Kharagpur', performance: '5:31.7s' },
-      { event: '100m H', athlete: 'Karishma Singh (Y24)', competition: "Sportech'26", college: 'IIT Delhi', performance: '18.42s' },
-      { event: 'Long Jump', athlete: 'Karishma Singh (Y24)', competition: "Inter IIT'25", college: 'IIT Hyderabad', performance: '4.99m' },
-      { event: 'High Jump', athlete: 'Mounika (Y25)', competition: "Sportech'26", college: 'IIT Delhi', performance: '1.41m' },
-      { event: 'Shot Put', athlete: 'Kavita Yadav', competition: "Inter IIT'17", college: 'IIT Madras', performance: '9.02m' },
-      { event: 'Discus', athlete: 'Arpita Verma (Y25)', competition: "Udghosh'26", college: 'IIT Kanpur', performance: '26.9m' },
-      { event: 'Javelin', athlete: 'Arpita Verma (Y25)', competition: "Udghosh'26", college: 'IIT Kanpur', performance: '27.51m' },
-      { event: 'Hammer', athlete: 'Meenakshi Meena (Y25)', competition: "Udghosh'26", college: 'IIT Kanpur', performance: '25.57m' },
-      { event: '4×100m Relay', athlete: 'Aradhana Ananya (Y25) · Priyanshi Meena (Y24) · Karishma Singh (Y24)', competition: "Inter IIT'25", college: 'IIT Hyderabad', performance: '55.28s' },
-      { event: '4×400m Relay', athlete: 'Priyanshi Meena (Y24) · P Movika (Y23) · Samiera R Nair (Y23) · Karishma Singh (Y24)', competition: "Inter IIT'25", college: 'IIT Hyderabad', performance: '4:34.22s' },
-      { event: '4×400m Mixed Relay', athlete: 'Anuj Kumar Gupta (Y23) · Priyanshi Meena (Y24) · Anukalp Raj (Y22) · Karishma Singh (Y23)', competition: "Inter IIT'25", college: 'IIT Hyderabad', performance: '4:04.62s' },
-    ],
-  },
-};
+const eventRecordData = window.ATHLETICS_RECORD_DATA;
+
+async function loadSupabaseRecords() {
+  const config = window.ATHLETICS_SUPABASE_CONFIG;
+  if (!config?.url || !config?.anonKey) return;
+  if (!window.supabase?.createClient) {
+    console.error('The Supabase client did not load; saved athletics records could not be fetched.');
+    eventRecordStatus.textContent = 'Some newer records could not be loaded. Showing records already on this page.';
+    eventRecordStatus.dataset.state = 'error';
+    eventRecordStatus.hidden = false;
+    return;
+  }
+
+  const client = window.supabase.createClient(config.url, config.anonKey);
+  const { data, error } = await client
+    .from('athletics_records')
+    .select('team, record_type, event, athlete, record_label, college, performance')
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('Unable to load athletics records from Supabase.', error);
+    eventRecordStatus.textContent = 'Some newer records could not be loaded. Showing records already on this page.';
+    eventRecordStatus.dataset.state = 'error';
+    eventRecordStatus.hidden = false;
+    return;
+  }
+
+  Object.values(eventRecordData).forEach(team => {
+    team.interIit = [];
+    team.institute = [];
+  });
+  data.forEach(record => {
+    if (record.record_type !== 'inter_iit' && record.record_type !== 'institute') return;
+    const category = record.record_type === 'inter_iit' ? 'interIit' : 'institute';
+    eventRecordData[record.team][category].push({
+      event: record.event,
+      athlete: record.athlete,
+      ...(record.record_type === 'inter_iit'
+        ? { year: record.record_label }
+        : { competition: record.record_label }),
+      college: record.college,
+      performance: record.performance,
+    });
+  });
+
+  const openCard = eventCards.find(card => card.getAttribute('aria-expanded') === 'true');
+  if (openCard) renderEventRecords(openCard);
+}
+
+loadSupabaseRecords().catch(error => {
+  console.error('Unable to initialize Supabase athletics records.', error);
+  eventRecordStatus.textContent = 'Some newer records could not be loaded. Showing records already on this page.';
+  eventRecordStatus.dataset.state = 'error';
+  eventRecordStatus.hidden = false;
+});
 
 function renderRecordRows(target, records, eventNames, recordType) {
   target.replaceChildren();
@@ -207,26 +181,28 @@ function renderRecordRows(target, records, eventNames, recordType) {
   });
 }
 
-eventCards.forEach(card => {
-  card.addEventListener('click', () => {
-    eventCards.forEach(eventCard => {
-      eventCard.setAttribute('aria-expanded', String(eventCard === card));
-    });
-    eventDetailsPanel.querySelector('#event-details-title').textContent = card.querySelector('h3').textContent;
-    const eventNames = eventDisciplineMap[card.dataset.event];
-    const renderTeamRecords = team => {
-      renderRecordRows(eventDetailsPanel.querySelector(`#${team}-inter-iit-records`), eventRecordData[team].interIit, eventNames, 'interIit');
-      renderRecordRows(eventDetailsPanel.querySelector(`#${team}-institute-records`), eventRecordData[team].institute, eventNames, 'institute');
-    };
-    renderTeamRecords('boys');
-    renderTeamRecords('girls');
-    eventRecordsEmpty.hidden = true;
-    eventRecordGroups.hidden = false;
-    eventDetailsPanel.hidden = false;
-
-    eventDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    document.querySelector('.event-details-close').focus({ preventScroll: true });
+function renderEventRecords(card) {
+  eventCards.forEach(eventCard => {
+    eventCard.setAttribute('aria-expanded', String(eventCard === card));
   });
+  eventDetailsPanel.querySelector('#event-details-title').textContent = card.querySelector('h3').textContent;
+  const eventNames = eventDisciplineMap[card.dataset.event];
+  const renderTeamRecords = team => {
+    renderRecordRows(eventDetailsPanel.querySelector(`#${team}-inter-iit-records`), eventRecordData[team].interIit, eventNames, 'interIit');
+    renderRecordRows(eventDetailsPanel.querySelector(`#${team}-institute-records`), eventRecordData[team].institute, eventNames, 'institute');
+  };
+  renderTeamRecords('boys');
+  renderTeamRecords('girls');
+  eventRecordsEmpty.hidden = true;
+  eventRecordGroups.hidden = false;
+  eventDetailsPanel.hidden = false;
+
+  eventDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.querySelector('.event-details-close').focus({ preventScroll: true });
+}
+
+eventCards.forEach(card => {
+  card.addEventListener('click', () => renderEventRecords(card));
 });
 
 document.querySelector('.event-details-close').addEventListener('click', () => {

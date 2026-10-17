@@ -56,6 +56,50 @@
 .refresh-button { font-size: 18px; height: 38px; line-height: 1; padding: 0; width: 38px; }
 .membership-admin { background: var(--panel); border: 1px solid var(--line); margin-bottom: 24px; padding: clamp(18px, 2.5vw, 28px); }
 .membership-admin > .directory-status { margin-bottom: 8px; }
+.profile-records { background: var(--panel); border: 1px solid var(--line); margin-bottom: 24px; padding: clamp(18px, 2.5vw, 28px); }
+.profile-records .directory-heading { align-items: flex-start; }
+.profile-records .directory-heading .eyebrow { color: var(--gold); margin: 0 0 9px; }
+.profile-records .directory-heading h3 { font: 600 26px var(--display); margin: 0; }
+.profile-records .directory-heading p:last-child { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 5px 0 0; }
+.profile-record-toolbar { align-items: center; display: flex; gap: 13px; margin-top: 20px; }
+.profile-record-menu { position: relative; }
+.profile-record-menu > summary { align-items: center; background: var(--bg); border: 1px solid var(--line); color: var(--text); cursor: pointer; display: flex; gap: 8px; list-style: none; min-height: 40px; padding: 0 12px; }
+.profile-record-menu > summary::-webkit-details-marker { display: none; }
+.profile-record-menu > summary span:first-child { font: 700 23px/1 var(--body); letter-spacing: .04em; }
+.profile-record-menu > summary:hover, .profile-record-menu[open] > summary { border-color: var(--gold); }
+.profile-record-menu > summary:focus-visible, .profile-record-menu-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.profile-record-menu-label { font-size: 10px; }
+.profile-record-menu-options { background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0, 0, 0, .28); display: grid; left: 0; min-width: 220px; padding: 5px; position: absolute; top: calc(100% + 6px); z-index: 5; }
+.profile-record-menu-option { background: transparent; border: 0; color: var(--muted); cursor: pointer; font: 500 11px var(--body); padding: 11px 12px; text-align: left; }
+.profile-record-menu-option:hover, .profile-record-menu-option[aria-pressed="true"] { background: var(--bg); color: var(--text); }
+.profile-record-selected { color: var(--text); font: 600 18px var(--display); margin: 0; }
+.profile-record-team-tabs { margin: 12px 0 0; padding: 0; }
+.profile-record-team-tabs .standings-tab { flex: 0 1 auto; font-size: 14px; min-width: 0; padding: 10px 18px 9px; }
+.profile-record-grid { display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); margin-top: 22px; }
+.profile-record-grid .event-record-table-wrap { border: 1px solid var(--line); max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--bg); scrollbar-gutter: stable; scrollbar-width: thin; }
+.profile-record-grid .event-record-table-wrap:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.profile-record-grid table { border-collapse: collapse; font-size: 12px; min-width: 940px; table-layout: fixed; text-align: left; width: 100%; }
+.profile-record-grid thead { background: var(--bg); color: var(--muted); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.profile-record-grid th, .profile-record-grid td { border-bottom: 1px solid var(--line); line-height: 1.55; padding: 13px 15px; vertical-align: middle; }
+.profile-record-grid thead th { font-weight: 700; white-space: nowrap; }
+.profile-record-grid thead th:nth-child(1), .profile-record-grid tbody th:first-child { width: 110px; }
+.profile-record-grid thead th:nth-child(2), .profile-record-grid tbody td:nth-child(2) { width: 310px; }
+.profile-record-grid thead th:nth-child(3), .profile-record-grid tbody td:nth-child(3) { width: 165px; }
+.profile-record-grid thead th:nth-child(4), .profile-record-grid tbody td:nth-child(4) { width: 220px; }
+.profile-record-grid thead th:nth-child(5), .profile-record-grid tbody td:nth-child(5) { width: 135px; }
+.profile-record-grid tbody tr:hover { background: color-mix(in srgb, var(--bg) 55%, transparent); }
+.profile-record-grid tbody th:first-child,
+.profile-record-grid tbody td:first-child,
+.profile-record-grid tbody td:nth-child(3),
+.profile-record-grid tbody td:nth-child(4),
+.profile-record-grid tbody td:nth-child(5) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-record-grid tbody th:first-child,
+.profile-record-grid tbody td:first-child { color: var(--text); font-weight: 600; }
+.profile-record-grid tbody td:nth-child(2) { color: var(--muted); overflow-wrap: anywhere; }
+.profile-record-grid tbody td:nth-child(n+3) { color: var(--muted); font-variant-numeric: tabular-nums; }
+.profile-record-grid tbody .profile-record-empty { color: var(--muted); padding: 24px 16px; text-align: center; }
+.profile-records .event-table-hint { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 8px 0 0; }
+#custom-record-type-field[hidden] { display: none; }
 .membership-request-list { display: grid; gap: 9px; }
 .membership-request-card { align-items: center; background: var(--bg); border: 1px solid var(--line); display: flex; gap: 16px; justify-content: space-between; padding: 13px 15px; }
 .membership-request-card h4 { color: var(--text); font: 600 16px var(--display); margin: 0; }
@@ -108,10 +152,33 @@
 .admin-page .membership-request-card { border-left: 2px solid var(--line); }
 .admin-page .membership-request-card:focus-within,
 .admin-page .membership-request-card:hover { border-left-color: var(--gold); }
+.record-admin[hidden] { display: none; }
+.admin-page .record-admin { background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--gold); margin-bottom: 18px; padding: clamp(18px, 2.5vw, 28px); }
+.record-admin .profile-editor-heading { margin-bottom: 18px; }
+.record-admin .profile-editor-heading .eyebrow { color: var(--gold); margin: 0 0 9px; }
+.record-admin .profile-editor-heading h3 { font: 600 26px var(--display); margin: 0; }
+.record-admin .profile-editor-heading > p:last-child { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 6px 0 0; }
+.record-form { margin-top: 0; }
+.record-form-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.record-form-grid label { color: var(--text); display: grid; font-size: 11px; font-weight: 600; gap: 7px; }
+.record-form-grid input, .record-form-grid select { background: var(--bg); border: 1px solid var(--line); color: var(--text); font: 400 12px/1.55 var(--body); min-height: 43px; padding: 10px 12px; width: 100%; }
+.record-form-grid input:focus, .record-form-grid select:focus { border-color: var(--red); outline: 1px solid var(--red); }
+.record-form .profile-form-actions { margin-top: 2px; }
+.record-form-status[data-state="success"] { color: var(--gold); }
+.record-admin-list { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+.record-admin-list .directory-heading { margin-bottom: 10px; }
+.record-admin-list .directory-heading h3 { font: 600 22px var(--display); margin: 0; }
+.admin-record-list { display: grid; gap: 9px; }
+.admin-record-card { align-items: center; background: var(--bg); border: 1px solid var(--line); border-left: 2px solid var(--line); display: flex; gap: 16px; justify-content: space-between; padding: 13px 15px; }
+.admin-record-card:hover { border-left-color: var(--gold); }
+.admin-record-card h4 { color: var(--text); font: 600 16px var(--display); margin: 0; }
+.admin-record-card p { color: var(--muted); font-size: 10px; margin: 3px 0; overflow-wrap: anywhere; }
+.admin-record-card small { color: var(--muted); font-size: 9px; }
 
 @media (max-width: 1000px) {
   .athletes-main { padding-left: 8%; padding-right: 8%; }
   .dashboard-grid { grid-template-columns: minmax(230px, .8fr) minmax(0, 1.2fr); gap: 16px; }
+  .record-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .athlete-profile-card { grid-template-columns: 44px minmax(0, 1fr); }
   .athlete-profile-photo, .athlete-profile-initials { height: 44px; width: 44px; }
   .athlete-profile-actions { grid-column: 2; }
@@ -127,13 +194,16 @@
   .athletes-intro { margin-bottom: 32px; }
   .dashboard-heading { align-items: start; }
   .membership-request-card { align-items: flex-start; flex-direction: column; }
+  .profile-records .directory-heading { align-items: center; }
+  .admin-record-card { align-items: flex-start; flex-direction: column; }
   .admin-page .athletes-main { padding-left: 7%; padding-right: 7%; }
   .admin-page .dashboard-heading { align-items: flex-start; gap: 14px; }
   .admin-page .dashboard-heading .signout-button { flex: 0 0 auto; }
   .admin-page .admin-dashboard-grid { grid-template-columns: 1fr; }
+  .record-form-grid { grid-template-columns: 1fr; }
   .dashboard-actions { justify-content: flex-end; }
   .admin-access-denied .signout-button { margin: 12px 0 0; }
-  .admin-access-denied .admin-return-link { margin-right: 100%; }
+  .admin-access-denied .admin-return-link { margin-right: 0; max-width: 100%; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .profile-directory { grid-row: 1; }
   .athlete-profile-card { grid-template-columns: 48px minmax(0, 1fr) auto; }

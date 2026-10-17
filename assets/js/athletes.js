@@ -24,7 +24,39 @@ const membershipRequestCount = document.querySelector('#membership-request-count
 const membershipStatus = document.querySelector('#membership-status');
 const profileEditor = document.querySelector('#profile-editor');
 const adminDashboardLink = document.querySelector('#admin-dashboard-link');
+const recordAdmin = document.querySelector('#record-admin');
+const recordForm = document.querySelector('#record-form');
+const recordFormStatus = document.querySelector('#record-form-status');
+const adminRecordList = document.querySelector('#admin-record-list');
+const adminRecordCount = document.querySelector('#admin-record-count');
+const adminRecordsStatus = document.querySelector('#admin-records-status');
+const recordsStatus = document.querySelector('#records-status');
+const cancelRecordEditButton = document.querySelector('#cancel-record-edit-button');
+const refreshRecordsButton = document.querySelector('#refresh-records-button');
+const refreshAdminRecordsButton = document.querySelector('#refresh-admin-records-button');
+const profileRecordMenu = document.querySelector('#profile-record-menu');
+const profileRecordMenuOptions = document.querySelector('#profile-record-menu-options');
+const profileRecordSelected = document.querySelector('#profile-record-selected');
+const profileRecordRows = document.querySelector('#profile-record-rows');
+const profileBoysTab = document.querySelector('#profile-boys-tab');
+const profileGirlsTab = document.querySelector('#profile-girls-tab');
+const customRecordTypeField = document.querySelector('#custom-record-type-field');
+const customRecordTypeInput = recordForm?.elements.namedItem('custom_record_type');
+const RECORD_CATEGORIES = {
+  inter_iit: 'Inter-IIT Records',
+  institute: 'Institute Records',
+  trials: 'Trials Timings',
+  sportsfest: 'Sportsfest Timings',
+  summer_trials: 'Summer Trials Timings',
+  sangram: 'Sangram',
+};
 const isAdminPage = document.body.dataset.page === 'admin';
+let profileRecords = [];
+const savedRecordType = localStorage.getItem('athletics-record-type');
+let selectedRecordType = savedRecordType && /^[a-z][a-z0-9_]{1,39}$/.test(savedRecordType)
+  ? savedRecordType
+  : 'inter_iit';
+let selectedRecordTeam = localStorage.getItem('athletics-record-team') === 'girls' ? 'girls' : 'boys';
 let currentRole = '';
 let currentUserId = '';
 let currentUserName = '';
@@ -45,6 +77,23 @@ themeToggle.addEventListener('click', () => {
   setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 });
 document.querySelector('#year').textContent = new Date().getFullYear();
+
+profileRecordMenu?.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  profileRecordMenu.open = false;
+  profileRecordMenu.querySelector('summary').focus();
+});
+document.addEventListener('pointerdown', event => {
+  if (profileRecordMenu && !profileRecordMenu.contains(event.target)) profileRecordMenu.open = false;
+});
+
+customRecordTypeField?.setAttribute('hidden', '');
+recordForm?.elements.namedItem('record_type').addEventListener('change', event => {
+  const isCustom = event.currentTarget.value === 'custom';
+  customRecordTypeField.hidden = !isCustom;
+  customRecordTypeInput.required = isCustom;
+  if (isCustom) customRecordTypeInput.focus();
+});
 
 function setStatus(element, message, state = '') {
   element.textContent = message;
@@ -100,6 +149,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     membershipPending.hidden = true;
     athleteDashboard.hidden = true;
     membershipAdmin.hidden = true;
+    if (recordAdmin) recordAdmin.hidden = true;
     currentRole = '';
     currentUserId = '';
     currentUserName = '';
@@ -122,6 +172,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     athleteDashboard.hidden = true;
     membershipPending.hidden = false;
     membershipAdmin.hidden = true;
+    if (recordAdmin) recordAdmin.hidden = true;
     document.querySelector('#membership-pending-title').textContent = title;
     document.querySelector('#membership-pending-message').textContent = message;
   }
@@ -135,7 +186,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       });
       document.querySelector('#profile-form-title').textContent = 'Edit athlete profile';
       athleteForm.querySelector('.profile-submit-label').textContent = 'Update profile';
-      document.querySelector('.profile-editor-heading p').textContent = currentRole === 'member'
+      profileEditor.querySelector('.profile-editor-heading p').textContent = currentRole === 'member'
         ? 'Only you can edit your profile.'
         : 'Update the athlete profile.';
       cancelEditButton.hidden = false;
@@ -146,9 +197,9 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         athleteForm.elements.namedItem('full_name').value = currentUserName;
         document.querySelector('#profile-form-title').textContent = 'Create my profile';
         athleteForm.querySelector('.profile-submit-label').textContent = 'Create profile';
-        document.querySelector('.profile-editor-heading p').textContent = 'Create your own athlete profile. You can edit it later.';
+        profileEditor.querySelector('.profile-editor-heading p').textContent = 'Create your own athlete profile. You can edit it later.';
       } else {
-        document.querySelector('.profile-editor-heading p').textContent = 'Build a profile for the team directory.';
+        profileEditor.querySelector('.profile-editor-heading p').textContent = 'Build a profile for the team directory.';
       }
       cancelEditButton.hidden = currentRole === 'member';
     }
@@ -244,6 +295,212 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
   }
 
+  function categoryTitle(recordType) {
+    return RECORD_CATEGORIES[recordType]
+      ?? recordType.split('_').filter(Boolean).map(word => `${word[0].toUpperCase()}${word.slice(1)}`).join(' ');
+  }
+
+  function getPublishedRecords() {
+    return Object.entries(window.ATHLETICS_RECORD_DATA).flatMap(([team, groups]) => [
+      ...groups.interIit.map(record => ({
+        ...record,
+        team,
+        record_type: 'inter_iit',
+        record_label: record.year,
+      })),
+      ...groups.institute.map(record => ({
+        ...record,
+        team,
+        record_type: 'institute',
+        record_label: record.competition,
+      })),
+    ]);
+  }
+
+  function renderRecordCategoryMenu() {
+    if (!profileRecordMenuOptions) return;
+    const recordTypes = [...new Set([
+      ...Object.keys(RECORD_CATEGORIES),
+      ...profileRecords.map(record => record.record_type),
+    ])];
+    profileRecordMenuOptions.replaceChildren(...recordTypes.map(recordType => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'profile-record-menu-option';
+      button.textContent = categoryTitle(recordType);
+      button.setAttribute('aria-pressed', String(recordType === selectedRecordType));
+      button.addEventListener('click', () => {
+        selectedRecordType = recordType;
+        localStorage.setItem('athletics-record-type', recordType);
+        profileRecordMenu.open = false;
+        renderProfileRecords();
+        profileRecordMenu.querySelector('summary').focus();
+      });
+      return button;
+    }));
+  }
+
+  function renderProfileRecords() {
+    if (!profileRecordRows) return;
+    renderRecordCategoryMenu();
+    profileRecordSelected.textContent = categoryTitle(selectedRecordType);
+    const records = profileRecords.filter(record =>
+      record.record_type === selectedRecordType && record.team === selectedRecordTeam);
+    profileRecordRows.replaceChildren();
+    if (!records.length) {
+      const row = document.createElement('tr');
+      const message = document.createElement('td');
+      message.colSpan = 5;
+      message.className = 'profile-record-empty';
+      message.textContent = `No entries are available for the ${selectedRecordTeam} team in this category yet.`;
+      row.append(message);
+      profileRecordRows.append(row);
+      return;
+    }
+
+    records.forEach(record => {
+      const row = document.createElement('tr');
+      const eventCell = document.createElement('th');
+      eventCell.scope = 'row';
+      eventCell.textContent = record.event;
+      row.append(eventCell);
+      [record.athlete, record.record_label, record.college, record.performance].forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = value ?? '';
+        row.append(cell);
+      });
+      profileRecordRows.append(row);
+    });
+  }
+
+  function selectRecordTeam(team) {
+    selectedRecordTeam = team;
+    localStorage.setItem('athletics-record-team', team);
+    [profileBoysTab, profileGirlsTab].forEach((tab, index) => {
+      const selected = (index === 0 ? 'boys' : 'girls') === team;
+      tab.classList.toggle('active', selected);
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    document.querySelector('#profile-record-table-panel').setAttribute(
+      'aria-labelledby',
+      team === 'boys' ? 'profile-boys-tab' : 'profile-girls-tab',
+    );
+    renderProfileRecords();
+  }
+
+  profileBoysTab?.addEventListener('click', () => selectRecordTeam('boys'));
+  profileGirlsTab?.addEventListener('click', () => selectRecordTeam('girls'));
+  [profileBoysTab, profileGirlsTab].forEach(tab => tab?.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const nextTab = tab === profileBoysTab ? profileGirlsTab : profileBoysTab;
+    selectRecordTeam(nextTab === profileBoysTab ? 'boys' : 'girls');
+    nextTab.focus();
+  }));
+  selectRecordTeam(selectedRecordTeam);
+
+  function resetRecordForm() {
+    if (!recordForm) return;
+    recordForm.reset();
+    recordForm.elements.namedItem('id').value = '';
+    customRecordTypeField.hidden = true;
+    customRecordTypeInput.required = false;
+    recordForm.querySelector('.record-submit-label').textContent = 'Add record';
+    cancelRecordEditButton.hidden = true;
+  }
+
+  function makeAdminRecordCard(record) {
+    const card = document.createElement('article');
+    card.className = 'admin-record-card';
+    const details = document.createElement('div');
+    const title = document.createElement('h4');
+    title.textContent = `${record.event} · ${record.performance}`;
+    const athlete = document.createElement('p');
+    athlete.textContent = record.athlete;
+    const meta = document.createElement('small');
+    meta.textContent = [
+      record.team === 'boys' ? 'Boys' : 'Girls',
+      categoryTitle(record.record_type),
+      record.record_label,
+      record.college,
+    ].filter(Boolean).join(' · ');
+    details.append(title, athlete, meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'membership-request-actions';
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.textContent = 'Edit';
+    editButton.addEventListener('click', () => {
+      recordForm.elements.namedItem('id').value = record.id;
+      ['team', 'record_type', 'event', 'athlete', 'record_label', 'college', 'performance'].forEach(field => {
+        if (field === 'record_type') {
+          const categoryInput = recordForm.elements.namedItem(field);
+          const isBuiltIn = [...categoryInput.options].some(option => option.value === record.record_type);
+          categoryInput.value = isBuiltIn ? record.record_type : 'custom';
+          customRecordTypeInput.value = isBuiltIn ? '' : categoryTitle(record.record_type);
+          customRecordTypeField.hidden = isBuiltIn;
+          customRecordTypeInput.required = !isBuiltIn;
+        } else {
+          recordForm.elements.namedItem(field).value = record[field] ?? '';
+        }
+      });
+      recordForm.querySelector('.record-submit-label').textContent = 'Update record';
+      cancelRecordEditButton.hidden = false;
+      recordForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => deleteAthleticsRecord(record));
+    actions.append(editButton, deleteButton);
+    card.append(details, actions);
+    return card;
+  }
+
+  async function loadAthleticsRecords() {
+    if (recordsStatus) setStatus(recordsStatus, 'Loading all team records…');
+    if (adminRecordsStatus) setStatus(adminRecordsStatus, 'Loading saved records…');
+    profileRecords = getPublishedRecords();
+    renderProfileRecords();
+    const { data, error } = await supabaseClient
+      .from('athletics_records')
+      .select('id, team, record_type, event, athlete, record_label, college, performance, created_at')
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Unable to load saved athletics records.', error);
+      renderProfileRecords();
+      const message = `Could not load newer saved records: ${error.message}. Showing the published records.`;
+      if (recordsStatus) setStatus(recordsStatus, message, 'error');
+      if (adminRecordsStatus) setStatus(adminRecordsStatus, message, 'error');
+      return;
+    }
+
+    profileRecords = data;
+    renderProfileRecords();
+    const recordCount = profileRecords.length;
+    if (recordsStatus) setStatus(recordsStatus, `${recordCount} total ${recordCount === 1 ? 'record' : 'records'}`);
+    if (adminRecordList) {
+      adminRecordList.replaceChildren(...data.map(makeAdminRecordCard));
+      adminRecordCount.textContent = `${data.length} ${data.length === 1 ? 'record' : 'records'} · edit or remove any record`;
+      setStatus(adminRecordsStatus, data.length ? '' : 'No admin-managed records yet.');
+    }
+  }
+
+  async function deleteAthleticsRecord(record) {
+    if (!window.confirm(`Delete the ${record.event} record for ${record.athlete}? This cannot be undone.`)) return;
+    const { error } = await supabaseClient.from('athletics_records').delete().eq('id', record.id);
+    if (error) {
+      console.error('Unable to delete athletics record.', error);
+      setStatus(adminRecordsStatus, `Could not delete record: ${error.message}`, 'error');
+      return;
+    }
+    if (recordForm.elements.namedItem('id').value === record.id) resetRecordForm();
+    await loadAthleticsRecords();
+    setStatus(adminRecordsStatus, 'Record deleted.');
+  }
+
   async function loadMembershipRequests() {
     setStatus(membershipStatus, 'Loading membership requests…');
     const { data, error } = await supabaseClient
@@ -333,6 +590,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       membershipPending.hidden = true;
       athleteDashboard.hidden = false;
       membershipAdmin.hidden = !isAdminPage;
+      if (recordAdmin) recordAdmin.hidden = !isAdminPage;
       if (adminDashboardLink) adminDashboardLink.hidden = isAdminPage;
       document.querySelector('.dashboard-heading .eyebrow').lastChild.textContent = isAdminPage
         ? ' ATHLETICS OPERATIONS · ADMIN'
@@ -342,7 +600,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         : 'Manage athlete profiles.';
       profileEditor.hidden = false;
       setFormMode();
-      const tasks = [loadProfiles()];
+      const tasks = [loadProfiles(), loadAthleticsRecords()];
       if (isAdminPage) tasks.push(loadMembershipRequests());
       await Promise.all(tasks);
       return;
@@ -355,6 +613,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       );
       return;
     }
+    if (recordAdmin) recordAdmin.hidden = true;
 
     const { data: membership, error: membershipError } = await supabaseClient
       .from('athlete_members')
@@ -406,7 +665,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     document.querySelector('#directory-title').textContent = 'Team directory';
     profileEditor.hidden = false;
     setFormMode();
-    await loadProfiles();
+    await Promise.all([loadProfiles(), loadAthleticsRecords()]);
   }
 
   loginForm.addEventListener('submit', async event => {
@@ -465,6 +724,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
 
   document.querySelector('#refresh-button').addEventListener('click', loadProfiles);
   document.querySelector('#refresh-requests-button').addEventListener('click', loadMembershipRequests);
+  if (refreshRecordsButton) refreshRecordsButton.addEventListener('click', loadAthleticsRecords);
+  if (refreshAdminRecordsButton) refreshAdminRecordsButton.addEventListener('click', loadAthleticsRecords);
   cancelEditButton.addEventListener('click', () => setFormMode());
 
   athleteForm.addEventListener('submit', async event => {
@@ -516,6 +777,76 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     setStatus(formStatus, 'Profile saved.', 'success');
     await loadProfiles();
   });
+
+  if (recordForm) {
+    recordForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (currentRole !== 'admin') {
+        setStatus(recordFormStatus, 'Only an admin can add records.', 'error');
+        return;
+      }
+
+      const formData = new FormData(recordForm);
+      const selectedType = String(formData.get('record_type'));
+      const customTypeName = String(formData.get('custom_record_type') ?? '').trim();
+      const customTypeSlug = customTypeName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      const recordType = selectedType === 'custom'
+        ? (/^[a-z][a-z0-9_]{1,39}$/.test(customTypeSlug) ? customTypeSlug : '')
+        : selectedType;
+      if (!recordType) {
+        setStatus(recordFormStatus, 'Enter a custom category name using at least two English letters or numbers.', 'error');
+        return;
+      }
+      const record = {
+        record_type: recordType,
+        team: String(formData.get('team')),
+        event: String(formData.get('event')),
+        athlete: String(formData.get('athlete')).trim(),
+        record_label: String(formData.get('record_label')).trim(),
+        college: String(formData.get('college')).trim(),
+        performance: String(formData.get('performance')).trim(),
+      };
+      const recordId = String(formData.get('id'));
+      const recordTypeLabel = categoryTitle(record.record_type);
+      const confirmation = [
+        `${recordId ? 'Update' : 'Add'} this ${recordTypeLabel} entry?`,
+        '',
+        `Team: ${record.team === 'boys' ? 'Boys' : 'Girls'}`,
+        `Event: ${record.event}`,
+        `Athlete(s): ${record.athlete}`,
+        `Year / meet / trial: ${record.record_label}`,
+        `College: ${record.college || 'Not provided'}`,
+        `Performance: ${record.performance}`,
+      ].join('\n');
+      if (!window.confirm(confirmation)) {
+        setStatus(recordFormStatus, recordId ? 'Update cancelled; no changes were saved.' : 'Record was not added.');
+        return;
+      }
+
+      const submitButton = recordForm.querySelector('[type="submit"]');
+      submitButton.disabled = true;
+      setStatus(recordFormStatus, recordId ? 'Updating record…' : 'Adding record…');
+      const query = recordId
+        ? supabaseClient.from('athletics_records').update(record).eq('id', recordId)
+        : supabaseClient.from('athletics_records').insert(record);
+      const { error } = await query;
+      submitButton.disabled = false;
+      if (error) {
+        console.error('Unable to save athletics record.', error);
+        setStatus(recordFormStatus, `Could not save record: ${error.message}`, 'error');
+        return;
+      }
+
+      resetRecordForm();
+      setStatus(recordFormStatus, recordId ? 'Record updated.' : 'Record added.', 'success');
+      await loadAthleticsRecords();
+      setStatus(adminRecordsStatus, recordId ? 'Record updated.' : 'Record added.');
+    });
+    cancelRecordEditButton.addEventListener('click', resetRecordForm);
+  }
 
   async function deleteProfile(id, name) {
     if (!window.confirm(`Delete ${name}'s athlete profile? This cannot be undone.`)) return;

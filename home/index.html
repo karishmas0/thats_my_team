@@ -8,6 +8,9 @@
   <title>IITK Athletics — Run. Jump. Throw.</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
   <link rel="stylesheet" href="../assets/css/dark-theme.css" id="theme-stylesheet">
+  <script src="../config/supabase-config.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../assets/js/records-data.js" defer></script>
   <script src="../assets/js/home.js" defer></script>
 </head>
 <body>
@@ -116,20 +119,22 @@
           <button class="event-details-close" type="button" aria-label="Close event details">&times;</button>
         </div>
         <p class="event-records-empty">No records have been added for this event yet.</p>
+        <p class="event-record-status" role="status" aria-live="polite" hidden></p>
         <div class="event-record-groups" hidden>
           <div class="standings-tabs event-record-tabs" role="tablist" aria-label="Choose team records">
             <button class="standings-tab active" id="boys-records-tab" type="button" role="tab" aria-selected="true" aria-controls="boys-records-panel">Boys’ team</button>
             <button class="standings-tab" id="girls-records-tab" type="button" role="tab" aria-selected="false" aria-controls="girls-records-panel" tabindex="-1">Girls’ team</button>
           </div>
+          <p class="event-table-hint">On a narrow screen, swipe or scroll horizontally to see every column.</p>
           <section class="event-record-panel" id="boys-records-panel" role="tabpanel" aria-labelledby="boys-records-tab">
             <div class="event-record-grid">
               <section class="event-record-group">
                 <h4>Inter-IIT records</h4>
-                <div class="event-record-table-wrap"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Year</th><th>College</th><th>Performance</th></tr></thead><tbody id="boys-inter-iit-records"></tbody></table></div>
+                <div class="event-record-table-wrap" tabindex="0" role="region" aria-label="Boys Inter-IIT records table"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Year</th><th>College</th><th>Performance</th></tr></thead><tbody id="boys-inter-iit-records"></tbody></table></div>
               </section>
               <section class="event-record-group">
                 <h4>IIT Kanpur institute records</h4>
-                <div class="event-record-table-wrap"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Competition</th><th>College</th><th>Performance</th></tr></thead><tbody id="boys-institute-records"></tbody></table></div>
+                <div class="event-record-table-wrap" tabindex="0" role="region" aria-label="Boys institute records table"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Competition</th><th>College</th><th>Performance</th></tr></thead><tbody id="boys-institute-records"></tbody></table></div>
               </section>
             </div>
           </section>
@@ -137,11 +142,11 @@
             <div class="event-record-grid">
               <section class="event-record-group">
                 <h4>Inter-IIT records</h4>
-                <div class="event-record-table-wrap"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Year</th><th>College</th><th>Performance</th></tr></thead><tbody id="girls-inter-iit-records"></tbody></table></div>
+                <div class="event-record-table-wrap" tabindex="0" role="region" aria-label="Girls Inter-IIT records table"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Year</th><th>College</th><th>Performance</th></tr></thead><tbody id="girls-inter-iit-records"></tbody></table></div>
               </section>
               <section class="event-record-group">
                 <h4>IIT Kanpur institute records</h4>
-                <div class="event-record-table-wrap"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Competition</th><th>College</th><th>Performance</th></tr></thead><tbody id="girls-institute-records"></tbody></table></div>
+                <div class="event-record-table-wrap" tabindex="0" role="region" aria-label="Girls institute records table"><table><thead><tr><th>Event</th><th>Athlete(s)</th><th>Competition</th><th>College</th><th>Performance</th></tr></thead><tbody id="girls-institute-records"></tbody></table></div>
               </section>
             </div>
           </section>

@@ -95,6 +95,9 @@ img { display: block; width: 100%; }
 .event-details-close:hover { border-color: var(--red); color: var(--red); }
 .event-details-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .event-records-empty { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 20px 0 0; }
+.event-record-status { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 12px 0 0; }
+.event-record-status[data-state="error"] { color: var(--red); }
+.event-record-status[hidden] { display: none; }
 .event-record-groups { margin-top: 22px; }
 .event-record-groups[hidden], .event-records-empty[hidden] { display: none; }
 .event-record-tabs { margin-bottom: 20px; }
@@ -102,16 +105,27 @@ img { display: block; width: 100%; }
 .event-record-grid { display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
 .event-record-group { min-width: 0; }
 .event-record-group h4 { border-bottom: 1px solid var(--line); color: var(--text); font: 600 18px var(--display); margin: 0 0 12px; padding-bottom: 11px; }
-.event-record-table-wrap { overflow-x: auto; }
-.event-record-group table { border-collapse: collapse; font-size: 12px; min-width: 700px; text-align: left; width: 100%; }
+.event-record-table-wrap { border: 1px solid var(--line); max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--bg); scrollbar-gutter: stable; scrollbar-width: thin; }
+.event-record-table-wrap:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.event-record-group table { border-collapse: collapse; font-size: 12px; min-width: 940px; table-layout: fixed; text-align: left; width: 100%; }
 .event-record-group thead { background: var(--bg); color: var(--muted); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
-.event-record-group th, .event-record-group td { border-bottom: 1px solid var(--line); padding: 12px; }
+.event-record-group th, .event-record-group td { border-bottom: 1px solid var(--line); padding: 13px 15px; vertical-align: middle; }
 .event-record-group thead th { font-weight: 700; white-space: nowrap; }
 .event-record-group tbody tr:hover { background: color-mix(in srgb, var(--bg) 55%, transparent); }
-.event-record-group tbody th, .event-record-group tbody td { line-height: 1.5; }
-.event-record-group tbody th:first-child { white-space: nowrap; }
+.event-record-group thead th:nth-child(1), .event-record-group tbody th:first-child { width: 110px; }
+.event-record-group thead th:nth-child(2), .event-record-group tbody td:nth-child(2) { width: 310px; }
+.event-record-group thead th:nth-child(3), .event-record-group tbody td:nth-child(3) { width: 165px; }
+.event-record-group thead th:nth-child(4), .event-record-group tbody td:nth-child(4) { width: 220px; }
+.event-record-group thead th:nth-child(5), .event-record-group tbody td:nth-child(5) { width: 135px; }
+.event-record-group tbody th, .event-record-group tbody td { line-height: 1.55; }
+.event-record-group tbody th:first-child,
+.event-record-group tbody td:nth-child(3),
+.event-record-group tbody td:nth-child(4),
+.event-record-group tbody td:nth-child(5) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.event-record-group tbody td:nth-child(2) { overflow-wrap: anywhere; }
 .event-record-group tbody th { color: var(--text); font-weight: 600; }
 .event-record-group tbody td { color: var(--muted); font-variant-numeric: tabular-nums; }
+.event-table-hint { color: var(--muted); display: none; font-size: 10px; line-height: 1.6; margin: 8px 0 0; }
 
 .team { background: var(--team-bg); max-width: none; padding-left: max(12.5%, calc((100% - 1080px) / 2)); padding-right: max(12.5%, calc((100% - 1080px) / 2)); }
 .gallery { display: grid; gap: 12px; grid-template-columns: 1.25fr 1fr 1fr; grid-template-rows: 200px 200px; }
@@ -298,6 +312,14 @@ img { display: block; width: 100%; }
   .event-details-panel { margin-top: 16px; padding: 18px; }
   .event-record-grid { gap: 22px; }
   .event-record-tabs .standings-tab { font-size: 17px; }
+}
+
+@media (min-width: 1100px) {
+  .profile-record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .event-table-hint { display: block; }
   .team { padding-left: 7%; padding-right: 7%; }
   .gallery { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 170px 130px 130px; }
   .gallery-large { grid-column: span 2; grid-row: auto; }

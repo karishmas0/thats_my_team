@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../assets/css/athletes.css">
   <script src="../config/supabase-config.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../assets/js/records-data.js" defer></script>
   <script src="../assets/js/athletes.js" defer></script>
 </head>
 <body class="athletes-page admin-page" data-page="admin">
@@ -89,6 +90,83 @@
         </div>
         <p class="directory-status" id="membership-status" role="status" aria-live="polite"></p>
         <div class="membership-request-list" id="membership-request-list"></div>
+      </section>
+
+      <section class="record-admin" id="record-admin" aria-labelledby="record-admin-title" hidden>
+        <div class="profile-editor-heading">
+          <p class="eyebrow"><span></span> RECORDS MANAGEMENT</p>
+          <h3 id="record-admin-title">Add a team record</h3>
+          <p>Saved entries appear in the matching category on Athlete Profiles. Inter-IIT and institute records also appear on the home page.</p>
+        </div>
+        <form class="athlete-form record-form" id="record-form">
+          <input type="hidden" name="id">
+          <div class="record-form-grid">
+            <label>Record category
+              <select name="record_type" required>
+                <option value="inter_iit">Inter-IIT record</option>
+                <option value="institute">IIT Kanpur institute record</option>
+                <option value="trials">Trials timings</option>
+                <option value="sportsfest">Sportsfest timings</option>
+                <option value="summer_trials">Summer trials timings</option>
+                <option value="sangram">Sangram</option>
+                <option value="custom">Other competition / custom category…</option>
+              </select>
+            </label>
+            <label id="custom-record-type-field" hidden>Custom category name
+              <input name="custom_record_type" type="text" maxlength="40" placeholder="e.g. Udghosh">
+            </label>
+            <label>Team
+              <select name="team" required>
+                <option value="boys">Boys</option>
+                <option value="girls">Girls</option>
+              </select>
+            </label>
+            <label>Event
+              <select name="event" required>
+                <option value="100m">100m</option>
+                <option value="200m">200m</option>
+                <option value="400m">400m</option>
+                <option value="800m">800m</option>
+                <option value="1500m">1500m</option>
+                <option value="5000m">5000m</option>
+                <option value="110m H">110m Hurdles</option>
+                <option value="400m H">400m Hurdles</option>
+                <option value="100m H">100m Hurdles</option>
+                <option value="Long Jump">Long Jump</option>
+                <option value="Triple Jump">Triple Jump</option>
+                <option value="High Jump">High Jump</option>
+                <option value="Pole Vault">Pole Vault</option>
+                <option value="Shot Put">Shot Put</option>
+                <option value="Discus">Discus</option>
+                <option value="Javelin">Javelin</option>
+                <option value="Hammer">Hammer</option>
+                <option value="4×100m Relay">4×100m Relay</option>
+                <option value="4×400m Relay">4×400m Relay</option>
+                <option value="4×400m Mixed Relay">4×400m Mixed Relay</option>
+              </select>
+            </label>
+            <label>Athlete(s)<input name="athlete" type="text" maxlength="300" required placeholder="Athlete name(s)"></label>
+            <label>Year / meet / trial<input name="record_label" type="text" maxlength="80" required placeholder="e.g. 2026, Round 1, or Sangram 2026"></label>
+            <label>College<input name="college" type="text" maxlength="100" placeholder="e.g. IIT Kanpur"></label>
+            <label>Time / mark<input name="performance" type="text" maxlength="50" required placeholder="e.g. 10.8s or 6.75m"></label>
+          </div>
+          <div class="profile-form-actions">
+            <button class="athletes-primary-button" type="submit"><span class="record-submit-label">Add record</span> <span aria-hidden="true">↗</span></button>
+            <button class="cancel-edit-button" id="cancel-record-edit-button" type="button" hidden>Cancel edit</button>
+          </div>
+          <p class="form-status" id="record-form-status" role="status" aria-live="polite"></p>
+        </form>
+        <section class="record-admin-list" aria-labelledby="record-admin-list-title">
+          <div class="directory-heading">
+            <div>
+              <h3 id="record-admin-list-title">Saved records</h3>
+              <p id="admin-record-count">Records you can manage</p>
+            </div>
+            <button class="refresh-button" id="refresh-admin-records-button" type="button" aria-label="Refresh saved records">↻</button>
+          </div>
+          <p class="directory-status" id="admin-records-status" role="status" aria-live="polite"></p>
+          <div class="admin-record-list" id="admin-record-list"></div>
+        </section>
       </section>
 
       <div class="dashboard-grid admin-dashboard-grid">

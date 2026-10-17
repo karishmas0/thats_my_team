@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../assets/css/athletes.css">
   <script src="../config/supabase-config.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../assets/js/records-data.js" defer></script>
   <script src="../assets/js/athletes.js" defer></script>
 </head>
 <body class="athletes-page">
@@ -78,6 +79,39 @@
           <button class="signout-button" id="signout-button" type="button">Sign out</button>
         </div>
       </div>
+      <section class="profile-records" aria-labelledby="profile-records-title">
+        <div class="directory-heading">
+          <div>
+            <p class="eyebrow"><span></span> TEAM BESTS</p>
+            <h3 id="profile-records-title">Athletics records &amp; timings</h3>
+            <p>Choose a competition or trial from the menu. Only admins can manage saved entries.</p>
+          </div>
+          <button class="refresh-button" id="refresh-records-button" type="button" aria-label="Refresh athletics records">↻</button>
+        </div>
+        <p class="directory-status" id="records-status" role="status" aria-live="polite"></p>
+        <div class="profile-record-toolbar">
+          <details class="profile-record-menu" id="profile-record-menu">
+            <summary aria-label="Choose records to view" title="Choose records to view"><span aria-hidden="true">⋯</span><span class="profile-record-menu-label">Choose records</span></summary>
+            <div class="profile-record-menu-options" id="profile-record-menu-options" role="group" aria-label="Record categories"></div>
+          </details>
+          <p class="profile-record-selected" id="profile-record-selected" aria-live="polite">Inter-IIT Records</p>
+        </div>
+        <p class="event-table-hint">On a narrow screen, swipe or scroll horizontally to see every column.</p>
+        <div class="standings-tabs profile-record-team-tabs" role="tablist" aria-label="Choose team records">
+          <button class="standings-tab active" id="profile-boys-tab" type="button" role="tab" aria-selected="true" aria-controls="profile-record-table-panel">Boys</button>
+          <button class="standings-tab" id="profile-girls-tab" type="button" role="tab" aria-selected="false" aria-controls="profile-record-table-panel" tabindex="-1">Girls</button>
+        </div>
+        <section class="profile-record-grid" id="profile-record-table-panel" role="tabpanel" aria-labelledby="profile-boys-tab" tabindex="0">
+          <section class="event-record-group">
+            <div class="profile-record-table-wrap event-record-table-wrap" tabindex="0" role="region" aria-label="Selected team records table">
+              <table>
+                <thead><tr><th>Event</th><th>Athlete(s)</th><th>Year / Meet</th><th>College</th><th>Performance</th></tr></thead>
+                <tbody id="profile-record-rows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
       <section class="membership-admin" id="membership-admin" aria-labelledby="membership-admin-title" hidden>
         <div class="directory-heading">
           <div><h3 id="membership-admin-title">Membership requests</h3><p id="membership-request-count">Pending team accounts</p></div>
