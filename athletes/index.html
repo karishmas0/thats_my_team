@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="IIT Kanpur athletics profiles. Sign in to manage athlete profiles.">
+  <title>Athlete profiles — IITK Athletics</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="../assets/css/dark-theme.css" id="theme-stylesheet">
+  <link rel="stylesheet" href="../assets/css/athletes.css">
+  <script src="../config/supabase-config.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../assets/js/athletes.js" defer></script>
+</head>
+<body class="athletes-page">
+  <header class="site-header athletes-header">
+    <a class="brand" href="../home/" aria-label="IITK Athletics home">
+      <img class="iitk-logo" src="https://raw.githubusercontent.com/karishmas0/ATHLETICS-WEB/13ab8e6903b603ba28f21a263837446099b87a92/athletics/image/WiitkL.png" alt="IIT Kanpur">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <img class="athletics-logo" src="https://raw.githubusercontent.com/karishmas0/ATHLETICS-WEB/13ab8e6903b603ba28f21a263837446099b87a92/athletics/image/ath_logo.png" alt="">
+      <span class="brand-name">IITK <b>ATHLETICS</b></span>
+    </a>
+    <nav class="athletes-nav" aria-label="Page navigation">
+      <a href="../home/">Home</a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+        <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+        <span class="theme-toggle-label">Light mode</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="athletes-main">
+    <section class="athletes-intro">
+      <p class="eyebrow"><span></span> IIT KANPUR · TRACK &amp; FIELD</p>
+      <h1>Athlete <em>profiles.</em></h1>
+      <p>A home for the people behind every personal best, podium, and team effort.</p>
+    </section>
+
+    <section class="auth-card" id="auth-card" aria-labelledby="auth-title">
+      <div class="auth-card-heading">
+        <p class="eyebrow"><span></span> TEAM MEMBER ACCESS</p>
+        <h2 id="auth-title">Sign in to continue.</h2>
+        <p>Sign in to view the team directory. Team members can create an account and request access; the admin approves requests.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label>Email address<input name="email" type="email" autocomplete="username" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="athletes-primary-button" type="submit">Sign in <span aria-hidden="true">↗</span></button>
+      </form>
+      <button class="auth-mode-toggle" id="auth-mode-toggle" type="button" aria-controls="signup-form" aria-expanded="false">New to the team? Create an account</button>
+      <form id="signup-form" class="login-form" hidden>
+        <label>Full name<input name="full_name" type="text" maxlength="100" autocomplete="name" required></label>
+        <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<input name="password" type="password" minlength="8" autocomplete="new-password" required><span class="field-hint">Use at least 8 characters.</span></label>
+        <button class="athletes-primary-button" type="submit">Create account <span aria-hidden="true">↗</span></button>
+      </form>
+      <button class="auth-mode-toggle" id="login-mode-toggle" type="button" aria-controls="login-form" aria-expanded="false" hidden>Already have an account? Sign in</button>
+      <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="membership-pending" id="membership-pending" aria-labelledby="membership-pending-title" hidden>
+      <div class="pending-mark" aria-hidden="true">…</div>
+      <p class="eyebrow"><span></span> TEAM ACCESS</p>
+      <h2 id="membership-pending-title">Your request is being reviewed.</h2>
+      <p id="membership-pending-message">Please verify your email if prompted. An athletics admin will approve your account before directory access is enabled.</p>
+      <button class="signout-button" id="pending-signout-button" type="button">Sign out</button>
+    </section>
+
+    <section class="athlete-dashboard" id="athlete-dashboard" hidden>
+      <div class="dashboard-heading">
+        <div>
+          <p class="eyebrow"><span></span> TEAM DIRECTORY</p>
+          <h2>Athlete profiles.</h2>
+        </div>
+        <div class="dashboard-actions">
+          <a class="admin-dashboard-link" id="admin-dashboard-link" href="../admin/" hidden>Admin dashboard <span aria-hidden="true">↗</span></a>
+          <button class="signout-button" id="signout-button" type="button">Sign out</button>
+        </div>
+      </div>
+      <section class="membership-admin" id="membership-admin" aria-labelledby="membership-admin-title" hidden>
+        <div class="directory-heading">
+          <div><h3 id="membership-admin-title">Membership requests</h3><p id="membership-request-count">Pending team accounts</p></div>
+          <button class="refresh-button" id="refresh-requests-button" type="button" aria-label="Refresh membership requests">↻</button>
+        </div>
+        <p class="directory-status" id="membership-status" role="status" aria-live="polite"></p>
+        <div class="membership-request-list" id="membership-request-list"></div>
+      </section>
+      <div class="dashboard-grid">
+        <section class="profile-editor" id="profile-editor" aria-labelledby="profile-form-title">
+          <div class="profile-editor-heading">
+            <h3 id="profile-form-title">Add an athlete</h3>
+            <p>Build a profile for the team directory.</p>
+          </div>
+          <form id="athlete-form" class="athlete-form">
+            <input type="hidden" name="id">
+            <label>Full name<input name="full_name" type="text" maxlength="100" autocomplete="name" required></label>
+            <div class="athlete-form-row">
+              <label>Team
+                <select name="team" required>
+                  <option value="">Choose team</option>
+                  <option value="Boys">Boys</option>
+                  <option value="Girls">Girls</option>
+                </select>
+              </label>
+              <label>Event<input name="event" type="text" maxlength="80" placeholder="e.g. 100m, Long Jump"></label>
+            </div>
+            <label>Batch / year<input name="batch" type="text" maxlength="30" placeholder="e.g. Y24"></label>
+            <label>Photo URL<input name="photo_url" type="url" maxlength="500" placeholder="https://…"></label>
+            <label>Profile bio<textarea name="bio" maxlength="600" rows="4" placeholder="A short introduction, highlights, or personal bests"></textarea></label>
+            <div class="profile-form-actions">
+              <button class="athletes-primary-button" type="submit"><span class="profile-submit-label">Save profile</span><span aria-hidden="true">↗</span></button>
+              <button class="cancel-edit-button" id="cancel-edit-button" type="button" hidden>Cancel edit</button>
+            </div>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+        <section class="profile-directory" aria-labelledby="directory-title">
+          <div class="directory-heading">
+            <div><h3 id="directory-title">Team directory</h3><p id="directory-count">Athlete profiles</p></div>
+            <button class="refresh-button" id="refresh-button" type="button" aria-label="Refresh athlete profiles">↻</button>
+          </div>
+          <p class="directory-status" id="directory-status" role="status" aria-live="polite"></p>
+          <div class="athlete-list" id="athlete-list"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer athletes-footer">
+    <a class="brand" href="../home/" aria-label="IITK Athletics home">
+      <img class="iitk-logo" src="https://raw.githubusercontent.com/karishmas0/ATHLETICS-WEB/13ab8e6903b603ba28f21a263837446099b87a92/athletics/image/WiitkL.png" alt="IIT Kanpur">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <img class="athletics-logo" src="https://raw.githubusercontent.com/karishmas0/ATHLETICS-WEB/13ab8e6903b603ba28f21a263837446099b87a92/athletics/image/ath_logo.png" alt="">
+      <span class="brand-name">IITK <b>ATHLETICS</b></span>
+    </a>
+    <p>Built on effort. Driven by the team.</p>
+    <a href="../home/" class="back-top">BACK TO HOME ↑</a>
+    <small>© <span id="year"></span> IITK Athletics</small>
+  </footer>
+</body>
+</html>
