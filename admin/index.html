@@ -50,6 +50,7 @@
         <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
         <button class="athletes-primary-button" type="submit">Sign in <span aria-hidden="true">↗</span></button>
       </form>
+      <button class="auth-mode-toggle" id="forgot-password-button" type="button">Forgot your password?</button>
       <button class="auth-mode-toggle" id="auth-mode-toggle" type="button" aria-controls="signup-form" aria-expanded="false" hidden>New to the team? Create an account</button>
       <form id="signup-form" class="login-form" hidden>
         <label>Full name<input name="full_name" type="text" maxlength="100" autocomplete="name" required></label>
@@ -167,6 +168,19 @@
           <p class="directory-status" id="admin-records-status" role="status" aria-live="polite"></p>
           <div class="admin-record-list" id="admin-record-list"></div>
         </section>
+      </section>
+
+      <section class="personal-best-admin" id="personal-best-admin" aria-labelledby="personal-best-admin-title" hidden>
+        <div class="directory-heading">
+          <div>
+            <p class="eyebrow"><span></span> ATHLETE SUBMISSIONS</p>
+            <h3 id="personal-best-admin-title">Personal bests</h3>
+            <p>Shared entries are visible to the team; private entries are visible only to their athlete and admins.</p>
+          </div>
+          <button class="refresh-button" id="refresh-personal-best-admin" type="button" aria-label="Refresh athlete personal bests">↻</button>
+        </div>
+        <p class="directory-status" id="personal-best-admin-status" role="status" aria-live="polite"></p>
+        <div class="personal-best-list" id="personal-best-admin-list"></div>
       </section>
 
       <div class="dashboard-grid admin-dashboard-grid">

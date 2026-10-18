@@ -33,6 +33,7 @@
 .auth-mode-toggle:hover { color: var(--red); }
 .auth-mode-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .auth-mode-toggle[hidden] { display: none; }
+.auth-mode-toggle:disabled { cursor: wait; opacity: .65; }
 .membership-pending { background: var(--panel); border: 1px solid var(--line); margin: 0 auto; max-width: 550px; padding: clamp(24px, 5vw, 42px); }
 .membership-pending[hidden], .membership-admin[hidden] { display: none; }
 .pending-mark { align-items: center; border: 1px solid var(--medal-border); border-radius: 50%; color: var(--gold); display: flex; font: 600 26px var(--display); height: 48px; justify-content: center; margin-bottom: 22px; width: 48px; }
@@ -57,6 +58,34 @@
 .membership-admin { background: var(--panel); border: 1px solid var(--line); margin-bottom: 24px; padding: clamp(18px, 2.5vw, 28px); }
 .membership-admin > .directory-status { margin-bottom: 8px; }
 .profile-records { background: var(--panel); border: 1px solid var(--line); margin-bottom: 24px; padding: clamp(18px, 2.5vw, 28px); }
+.personal-bests, .personal-best-admin { background: var(--panel); border: 1px solid var(--line); margin-bottom: 24px; padding: clamp(18px, 2.5vw, 28px); }
+.personal-bests[hidden], .personal-best-admin[hidden] { display: none; }
+.personal-bests > .profile-editor-heading, .personal-best-admin > .directory-heading { margin-bottom: 18px; }
+.personal-bests .profile-editor-heading .eyebrow, .personal-best-admin .eyebrow { color: var(--gold); margin: 0 0 9px; }
+.personal-bests .profile-editor-heading h3, .personal-best-admin .directory-heading h3 { font: 600 26px var(--display); margin: 0; }
+.personal-bests .profile-editor-heading > p:last-child, .personal-best-admin .directory-heading p:last-child { color: var(--muted); font-size: 10px; line-height: 1.7; margin: 6px 0 0; }
+.personal-best-form { margin-top: 18px; }
+.personal-best-form-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.personal-best-note { grid-column: 1 / -1; }
+.personal-best-share { align-items: start; display: flex !important; gap: 11px !important; margin-top: 1px; }
+.personal-best-share input { accent-color: var(--gold); flex: 0 0 auto; height: 16px; margin: 2px 0 0; min-height: 0; width: 16px; }
+.personal-best-share span { display: grid; gap: 4px; }
+.personal-best-share strong { color: var(--text); font-size: 11px; }
+.personal-best-share small { color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.5; }
+.personal-best-list-section { border-top: 1px solid var(--line); margin-top: 25px; padding-top: 20px; }
+.personal-best-list-section .directory-heading { align-items: center; margin-bottom: 10px; }
+.personal-best-list-section .directory-heading h4 { color: var(--text); font: 600 19px var(--display); margin: 0; }
+.personal-best-list-section .directory-heading p { color: var(--muted); font-size: 10px; margin: 4px 0 0; }
+.team-personal-bests { margin-top: 25px; }
+.personal-best-list { display: grid; gap: 9px; }
+.personal-best-card { align-items: center; background: var(--bg); border: 1px solid var(--line); display: flex; gap: 18px; justify-content: space-between; min-width: 0; padding: 13px 15px; }
+.personal-best-card h5 { color: var(--text); font: 600 17px var(--display); margin: 0; }
+.personal-best-card p { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 4px 0 0; }
+.personal-best-card .personal-best-note-copy { color: var(--muted); font-size: 11px; margin-top: 7px; overflow-wrap: anywhere; }
+.personal-best-actions { display: flex; flex: 0 0 auto; gap: 7px; }
+.personal-best-actions button { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 9px; padding: 8px 11px; }
+.personal-best-actions button:hover { border-color: var(--gold); color: var(--text); }
+.personal-best-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .profile-records .directory-heading { align-items: flex-start; }
 .profile-records .directory-heading .eyebrow { color: var(--gold); margin: 0 0 9px; }
 .profile-records .directory-heading h3 { font: 600 26px var(--display); margin: 0; }
@@ -125,6 +154,9 @@
 .admin-dashboard-link, .admin-return-link { align-items: center; border: 1px solid var(--medal-border); color: var(--gold); display: inline-flex; font-size: 10px; gap: 12px; padding: 11px 14px; text-decoration: none; }
 .admin-dashboard-link:hover, .admin-return-link:hover { background: var(--gold); color: var(--bg); }
 .admin-dashboard-link[hidden] { display: none; }
+.admin-return-link[hidden] { display: none; }
+.reset-password-main .auth-card { margin-top: 0; }
+.reset-password-main .admin-return-link { margin-top: 16px; }
 
 .admin-page .athletes-main { max-width: 1560px; padding-left: 8%; padding-right: 8%; }
 .admin-page .admin-intro { border-bottom: 1px solid var(--line); margin-bottom: 34px; max-width: none; padding-bottom: 28px; }
@@ -194,6 +226,10 @@
   .athletes-intro { margin-bottom: 32px; }
   .dashboard-heading { align-items: start; }
   .membership-request-card { align-items: flex-start; flex-direction: column; }
+  .personal-best-card { align-items: flex-start; flex-direction: column; }
+  .personal-best-form-grid { grid-template-columns: 1fr; }
+  .personal-best-note { grid-column: auto; }
+  .personal-best-actions { flex-wrap: wrap; }
   .profile-records .directory-heading { align-items: center; }
   .admin-record-card { align-items: flex-start; flex-direction: column; }
   .admin-page .athletes-main { padding-left: 7%; padding-right: 7%; }

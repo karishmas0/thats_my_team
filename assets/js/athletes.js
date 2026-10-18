@@ -8,12 +8,26 @@ const authCard = document.querySelector('#auth-card');
 const athleteDashboard = document.querySelector('#athlete-dashboard');
 const authStatus = document.querySelector('#auth-status');
 const loginForm = document.querySelector('#login-form');
+const forgotPasswordButton = document.querySelector('#forgot-password-button');
 const signupForm = document.querySelector('#signup-form');
 const authModeToggle = document.querySelector('#auth-mode-toggle');
 const loginModeToggle = document.querySelector('#login-mode-toggle');
 const membershipPending = document.querySelector('#membership-pending');
 const athleteForm = document.querySelector('#athlete-form');
 const athleteList = document.querySelector('#athlete-list');
+const personalBestSection = document.querySelector('#personal-bests');
+const personalBestForm = document.querySelector('#personal-best-form');
+const personalBestFormStatus = document.querySelector('#personal-best-form-status');
+const personalBestSubmitLabel = document.querySelector('.personal-best-submit-label');
+const cancelPersonalBestEdit = document.querySelector('#cancel-personal-best-edit');
+const myPersonalBestList = document.querySelector('#my-personal-best-list');
+const myPersonalBestCount = document.querySelector('#my-personal-best-count');
+const myPersonalBestsStatus = document.querySelector('#my-personal-bests-status');
+const teamPersonalBestList = document.querySelector('#team-personal-best-list');
+const teamPersonalBestsStatus = document.querySelector('#team-personal-bests-status');
+const personalBestAdmin = document.querySelector('#personal-best-admin');
+const personalBestAdminList = document.querySelector('#personal-best-admin-list');
+const personalBestAdminStatus = document.querySelector('#personal-best-admin-status');
 const formStatus = document.querySelector('#form-status');
 const directoryStatus = document.querySelector('#directory-status');
 const directoryCount = document.querySelector('#directory-count');
@@ -34,6 +48,8 @@ const recordsStatus = document.querySelector('#records-status');
 const cancelRecordEditButton = document.querySelector('#cancel-record-edit-button');
 const refreshRecordsButton = document.querySelector('#refresh-records-button');
 const refreshAdminRecordsButton = document.querySelector('#refresh-admin-records-button');
+const refreshPersonalBestsButton = document.querySelector('#refresh-personal-bests');
+const refreshPersonalBestAdminButton = document.querySelector('#refresh-personal-best-admin');
 const profileRecordMenu = document.querySelector('#profile-record-menu');
 const profileRecordMenuOptions = document.querySelector('#profile-record-menu-options');
 const profileRecordSelected = document.querySelector('#profile-record-selected');
@@ -60,6 +76,7 @@ let selectedRecordTeam = localStorage.getItem('athletics-record-team') === 'girl
 let currentRole = '';
 let currentUserId = '';
 let currentUserName = '';
+let sessionBeingHandled = '';
 
 function setTheme(theme) {
   const isLight = theme === 'light';
@@ -148,8 +165,11 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     authCard.hidden = false;
     membershipPending.hidden = true;
     athleteDashboard.hidden = true;
+    sessionBeingHandled = '';
     membershipAdmin.hidden = true;
     if (recordAdmin) recordAdmin.hidden = true;
+    if (personalBestAdmin) personalBestAdmin.hidden = true;
+    if (personalBestSection) personalBestSection.hidden = true;
     currentRole = '';
     currentUserId = '';
     currentUserName = '';
@@ -164,7 +184,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       document.querySelector('#auth-title').textContent = 'Admin sign-in.';
       document.querySelector('.auth-card-heading > p:last-child').textContent = 'Sign in with an approved athletics admin account to manage team access and athlete profiles.';
     }
-    setStatus(authStatus, message);
+    setStatus(authStatus, message, message ? 'error' : '');
   }
 
   function showMembershipPending(title, message) {
@@ -173,6 +193,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     membershipPending.hidden = false;
     membershipAdmin.hidden = true;
     if (recordAdmin) recordAdmin.hidden = true;
+    if (personalBestAdmin) personalBestAdmin.hidden = true;
+    if (personalBestSection) personalBestSection.hidden = true;
     document.querySelector('#membership-pending-title').textContent = title;
     document.querySelector('#membership-pending-message').textContent = message;
   }
@@ -389,16 +411,19 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     renderProfileRecords();
   }
 
-  profileBoysTab?.addEventListener('click', () => selectRecordTeam('boys'));
-  profileGirlsTab?.addEventListener('click', () => selectRecordTeam('girls'));
-  [profileBoysTab, profileGirlsTab].forEach(tab => tab?.addEventListener('keydown', event => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    event.preventDefault();
-    const nextTab = tab === profileBoysTab ? profileGirlsTab : profileBoysTab;
-    selectRecordTeam(nextTab === profileBoysTab ? 'boys' : 'girls');
-    nextTab.focus();
-  }));
-  selectRecordTeam(selectedRecordTeam);
+  const profileRecordTablePanel = document.querySelector('#profile-record-table-panel');
+  if (profileBoysTab && profileGirlsTab && profileRecordTablePanel && profileRecordRows) {
+    profileBoysTab.addEventListener('click', () => selectRecordTeam('boys'));
+    profileGirlsTab.addEventListener('click', () => selectRecordTeam('girls'));
+    [profileBoysTab, profileGirlsTab].forEach(tab => tab.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      const nextTab = tab === profileBoysTab ? profileGirlsTab : profileBoysTab;
+      selectRecordTeam(nextTab === profileBoysTab ? 'boys' : 'girls');
+      nextTab.focus();
+    }));
+    selectRecordTeam(selectedRecordTeam);
+  }
 
   function resetRecordForm() {
     if (!recordForm) return;
@@ -488,6 +513,150 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
   }
 
+  function makePersonalBestCard(record, { canEdit = false, canDelete = false, isAdmin = false, ownerName = '' } = {}) {
+    const card = document.createElement('article');
+    card.className = 'personal-best-card';
+    const details = document.createElement('div');
+    const heading = document.createElement('h5');
+    heading.textContent = `${record.event} · ${record.performance}`;
+    const meta = document.createElement('p');
+    const achievedDate = record.achieved_on
+      ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(`${record.achieved_on}T00:00:00`))
+      : 'Date not provided';
+    meta.textContent = [ownerName, achievedDate, record.share_with_team ? 'Shared with team' : 'Private'].filter(Boolean).join(' · ');
+    details.append(heading, meta);
+    if (record.note) {
+      const note = document.createElement('p');
+      note.className = 'personal-best-note-copy';
+      note.textContent = record.note;
+      details.append(note);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'personal-best-actions';
+    if (canEdit) {
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.textContent = 'Edit';
+      editButton.addEventListener('click', () => {
+        personalBestForm.elements.namedItem('id').value = record.id;
+        personalBestForm.elements.namedItem('event').value = record.event;
+        personalBestForm.elements.namedItem('performance').value = record.performance;
+        personalBestForm.elements.namedItem('achieved_on').value = record.achieved_on ?? '';
+        personalBestForm.elements.namedItem('note').value = record.note ?? '';
+        personalBestForm.elements.namedItem('share_with_team').checked = record.share_with_team;
+        personalBestSubmitLabel.textContent = 'Update personal best';
+        cancelPersonalBestEdit.hidden = false;
+        personalBestForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        personalBestForm.elements.namedItem('event').focus();
+      });
+      actions.append(editButton);
+    }
+    if (canDelete) {
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', () => deletePersonalBest(record, isAdmin));
+      actions.append(deleteButton);
+    }
+    card.append(details);
+    if (actions.childElementCount) card.append(actions);
+    return card;
+  }
+
+  async function loadPersonalBests() {
+    const status = isAdminPage ? personalBestAdminStatus : myPersonalBestsStatus;
+    if (status) setStatus(status, 'Loading personal bests…');
+    const { data, error } = await supabaseClient
+      .from('athlete_personal_bests')
+      .select('id, owner_user_id, event, performance, achieved_on, note, share_with_team, created_at')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Unable to load athlete personal bests.', error);
+      const message = `Could not load personal bests: ${error.message}. The personal-best database migration may need to be run.`;
+      if (myPersonalBestsStatus) setStatus(myPersonalBestsStatus, message, 'error');
+      if (teamPersonalBestsStatus) setStatus(teamPersonalBestsStatus, message, 'error');
+      if (personalBestAdminStatus) setStatus(personalBestAdminStatus, message, 'error');
+      return;
+    }
+
+    if (isAdminPage) {
+      const { data: members, error: memberError } = await supabaseClient
+        .from('athlete_members')
+        .select('user_id, full_name');
+      if (memberError) {
+        console.error('Unable to load personal-best owner names.', memberError);
+        setStatus(personalBestAdminStatus, `Personal bests loaded, but athlete names could not be loaded: ${memberError.message}`, 'error');
+      }
+      const memberNames = new Map((members ?? []).map(member => [member.user_id, member.full_name]));
+      personalBestAdminList.replaceChildren(...data.map(record => makePersonalBestCard(record, {
+        ownerName: memberNames.get(record.owner_user_id) || 'Team member',
+        canDelete: true,
+        isAdmin: true,
+      })));
+      if (!memberError) {
+        setStatus(personalBestAdminStatus, data.length
+          ? `${data.length} ${data.length === 1 ? 'personal best' : 'personal bests'} · private and team-shared`
+          : 'No athlete personal bests have been submitted yet.');
+      }
+      return;
+    }
+
+    const ownRecords = data.filter(record => record.owner_user_id === currentUserId);
+    const sharedRecords = data.filter(record => record.owner_user_id !== currentUserId && record.share_with_team);
+    myPersonalBestList.replaceChildren(...ownRecords.map(record => makePersonalBestCard(record, {
+      canEdit: true,
+      canDelete: true,
+    })));
+    myPersonalBestCount.textContent = `${ownRecords.length} saved ${ownRecords.length === 1 ? 'PB' : 'PBs'}`;
+    setStatus(myPersonalBestsStatus, ownRecords.length ? '' : 'You have not added any personal bests yet.');
+
+    const { data: athletes, error: athleteError } = await supabaseClient
+      .from('athletes')
+      .select('owner_user_id, full_name')
+      .not('owner_user_id', 'is', null);
+    if (athleteError) {
+      console.error('Unable to load team-shared personal-best athlete names.', athleteError);
+      setStatus(teamPersonalBestsStatus, `Could not load athlete names: ${athleteError.message}`, 'error');
+      return;
+    }
+    const memberNames = new Map(athletes.map(athlete => [athlete.owner_user_id, athlete.full_name]));
+    teamPersonalBestList.replaceChildren(...sharedRecords.map(record => makePersonalBestCard(record, {
+      ownerName: memberNames.get(record.owner_user_id) || 'Team member',
+    })));
+    setStatus(teamPersonalBestsStatus, sharedRecords.length
+      ? `${sharedRecords.length} team-shared ${sharedRecords.length === 1 ? 'PB' : 'PBs'}`
+      : 'No teammates have shared personal bests yet.');
+  }
+
+  function resetPersonalBestForm() {
+    if (!personalBestForm) return;
+    personalBestForm.reset();
+    personalBestForm.elements.namedItem('id').value = '';
+    personalBestSubmitLabel.textContent = 'Save personal best';
+    cancelPersonalBestEdit.hidden = true;
+    setStatus(personalBestFormStatus, '');
+  }
+
+  async function deletePersonalBest(record, isAdmin = false) {
+    const prompt = isAdmin
+      ? `Delete ${record.event} personal best (${record.performance}) submitted by this athlete? This cannot be undone.`
+      : `Delete your ${record.event} personal best (${record.performance})? This cannot be undone.`;
+    if (!window.confirm(prompt)) return;
+    let query = supabaseClient.from('athlete_personal_bests').delete().eq('id', record.id);
+    if (!isAdmin) query = query.eq('owner_user_id', currentUserId);
+    const { error } = await query;
+    if (error) {
+      console.error('Unable to delete athlete personal best.', error);
+      const status = isAdmin ? personalBestAdminStatus : myPersonalBestsStatus;
+      setStatus(status, `Could not delete personal best: ${error.message}`, 'error');
+      return;
+    }
+    await loadPersonalBests();
+    if (!isAdmin) resetPersonalBestForm();
+    setStatus(isAdmin ? personalBestAdminStatus : myPersonalBestsStatus, 'Personal best deleted.');
+  }
+
   async function deleteAthleticsRecord(record) {
     if (!window.confirm(`Delete the ${record.event} record for ${record.athlete}? This cannot be undone.`)) return;
     const { error } = await supabaseClient.from('athletics_records').delete().eq('id', record.id);
@@ -567,10 +736,13 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
 
   async function handleSession(session) {
     if (!session) {
+      sessionBeingHandled = '';
       showLogin(athleteDashboard.hidden ? authStatus.textContent : '');
       return;
     }
 
+    if (sessionBeingHandled === session.user.id) return;
+    sessionBeingHandled = session.user.id;
     currentUserId = session.user.id;
     currentUserName = String(session.user.user_metadata?.full_name ?? '');
     setStatus(authStatus, 'Checking admin access…');
@@ -591,6 +763,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       athleteDashboard.hidden = false;
       membershipAdmin.hidden = !isAdminPage;
       if (recordAdmin) recordAdmin.hidden = !isAdminPage;
+      if (personalBestAdmin) personalBestAdmin.hidden = !isAdminPage;
+      if (personalBestSection) personalBestSection.hidden = true;
       if (adminDashboardLink) adminDashboardLink.hidden = isAdminPage;
       document.querySelector('.dashboard-heading .eyebrow').lastChild.textContent = isAdminPage
         ? ' ATHLETICS OPERATIONS · ADMIN'
@@ -601,7 +775,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       profileEditor.hidden = false;
       setFormMode();
       const tasks = [loadProfiles(), loadAthleticsRecords()];
-      if (isAdminPage) tasks.push(loadMembershipRequests());
+      if (isAdminPage) tasks.push(loadMembershipRequests(), loadPersonalBests());
       await Promise.all(tasks);
       return;
     }
@@ -614,6 +788,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       return;
     }
     if (recordAdmin) recordAdmin.hidden = true;
+    if (personalBestAdmin) personalBestAdmin.hidden = true;
 
     const { data: membership, error: membershipError } = await supabaseClient
       .from('athlete_members')
@@ -659,13 +834,14 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     membershipPending.hidden = true;
     athleteDashboard.hidden = false;
     membershipAdmin.hidden = true;
+    if (personalBestSection) personalBestSection.hidden = false;
     if (adminDashboardLink) adminDashboardLink.hidden = true;
     document.querySelector('.dashboard-heading .eyebrow').lastChild.textContent = ' TEAM DIRECTORY · MEMBER';
     document.querySelector('.dashboard-heading h2').textContent = 'Athlete profiles.';
     document.querySelector('#directory-title').textContent = 'Team directory';
     profileEditor.hidden = false;
     setFormMode();
-    await Promise.all([loadProfiles(), loadAthleticsRecords()]);
+    await Promise.all([loadProfiles(), loadAthleticsRecords(), loadPersonalBests()]);
   }
 
   loginForm.addEventListener('submit', async event => {
@@ -674,13 +850,48 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     submitButton.disabled = true;
     setStatus(authStatus, 'Signing in…');
     const formData = new FormData(event.currentTarget);
-    const { error } = await supabaseClient.auth.signInWithPassword({
-      email: formData.get('email'),
-      password: formData.get('password'),
-    });
-    submitButton.disabled = false;
-    if (error) {
-      setStatus(authStatus, `Sign-in failed: ${error.message}`, 'error');
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: formData.get('email'),
+        password: formData.get('password'),
+      });
+      if (error) {
+        setStatus(authStatus, `Sign-in failed: ${error.message}`, 'error');
+      } else if (data.session) {
+        await handleSession(data.session);
+      } else {
+        setStatus(authStatus, 'Sign-in did not create a session. Check your email verification status and try again.', 'error');
+      }
+    } catch (error) {
+      console.error('Unable to sign in.', error);
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus(authStatus, `Sign-in failed: ${message}`, 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  forgotPasswordButton?.addEventListener('click', async () => {
+    const emailInput = loginForm.elements.namedItem('email');
+    emailInput.value = emailInput.value.trim();
+    if (!emailInput.reportValidity()) return;
+
+    forgotPasswordButton.disabled = true;
+    setStatus(authStatus, 'Sending password recovery instructions…');
+    try {
+      const redirectTo = new URL('../auth/reset-password.html', window.location.href).href;
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(emailInput.value, { redirectTo });
+      if (error) {
+        setStatus(authStatus, `Could not send recovery instructions: ${error.message}`, 'error');
+      } else {
+        setStatus(authStatus, 'If an account exists for that email, password recovery instructions have been sent.', 'success');
+      }
+    } catch (error) {
+      console.error('Unable to request password recovery.', error);
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus(authStatus, `Could not send recovery instructions: ${message}`, 'error');
+    } finally {
+      forgotPasswordButton.disabled = false;
     }
   });
 
@@ -726,6 +937,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
   document.querySelector('#refresh-requests-button').addEventListener('click', loadMembershipRequests);
   if (refreshRecordsButton) refreshRecordsButton.addEventListener('click', loadAthleticsRecords);
   if (refreshAdminRecordsButton) refreshAdminRecordsButton.addEventListener('click', loadAthleticsRecords);
+  if (refreshPersonalBestsButton) refreshPersonalBestsButton.addEventListener('click', loadPersonalBests);
+  if (refreshPersonalBestAdminButton) refreshPersonalBestAdminButton.addEventListener('click', loadPersonalBests);
   cancelEditButton.addEventListener('click', () => setFormMode());
 
   athleteForm.addEventListener('submit', async event => {
@@ -777,6 +990,47 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     setStatus(formStatus, 'Profile saved.', 'success');
     await loadProfiles();
   });
+
+  if (personalBestForm) {
+    personalBestForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (currentRole !== 'member') {
+        setStatus(personalBestFormStatus, 'Only an approved athlete can add personal bests.', 'error');
+        return;
+      }
+
+      const formData = new FormData(personalBestForm);
+      const personalBest = {
+        owner_user_id: currentUserId,
+        event: String(formData.get('event')),
+        performance: String(formData.get('performance')).trim(),
+        achieved_on: String(formData.get('achieved_on')) || null,
+        note: String(formData.get('note')).trim(),
+        share_with_team: formData.get('share_with_team') === 'on',
+      };
+      const personalBestId = String(formData.get('id'));
+      const submitButton = personalBestForm.querySelector('[type="submit"]');
+      submitButton.disabled = true;
+      setStatus(personalBestFormStatus, personalBestId ? 'Updating personal best…' : 'Saving personal best…');
+      let query = personalBestId
+        ? supabaseClient.from('athlete_personal_bests').update(personalBest)
+          .eq('id', personalBestId)
+          .eq('owner_user_id', currentUserId)
+        : supabaseClient.from('athlete_personal_bests').insert(personalBest);
+      const { error } = await query;
+      submitButton.disabled = false;
+      if (error) {
+        console.error('Unable to save athlete personal best.', error);
+        setStatus(personalBestFormStatus, `Could not save personal best: ${error.message}`, 'error');
+        return;
+      }
+
+      resetPersonalBestForm();
+      setStatus(personalBestFormStatus, personalBestId ? 'Personal best updated.' : 'Personal best saved.', 'success');
+      await loadPersonalBests();
+    });
+    cancelPersonalBestEdit.addEventListener('click', resetPersonalBestForm);
+  }
 
   if (recordForm) {
     recordForm.addEventListener('submit', async event => {

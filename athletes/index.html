@@ -112,6 +112,47 @@
           </section>
         </section>
       </section>
+      <section class="personal-bests" id="personal-bests" aria-labelledby="personal-bests-title" hidden>
+        <div class="profile-editor-heading">
+          <p class="eyebrow"><span></span> YOUR PERFORMANCE</p>
+          <h3 id="personal-bests-title">My personal bests</h3>
+          <p>Add your own PBs. They stay private unless you choose to share them with the team.</p>
+        </div>
+        <form class="athlete-form personal-best-form" id="personal-best-form">
+          <input type="hidden" name="id">
+          <div class="personal-best-form-grid">
+            <label>Event
+              <select name="event" required>
+                <option value="">Choose an event</option>
+                <option>100m</option><option>200m</option><option>400m</option><option>800m</option><option>1500m</option><option>5000m</option>
+                <option>110m H</option><option>400m H</option><option>100m H</option>
+                <option>Long Jump</option><option>Triple Jump</option><option>High Jump</option><option>Pole Vault</option>
+                <option>Shot Put</option><option>Discus</option><option>Javelin</option><option>Hammer</option>
+                <option>4×100m Relay</option><option>4×400m Relay</option><option>4×400m Mixed Relay</option>
+              </select>
+            </label>
+            <label>Personal best (time / mark)<input name="performance" type="text" maxlength="50" required placeholder="e.g. 12.48s or 5.42m"></label>
+            <label>Date achieved<input name="achieved_on" type="date"></label>
+            <label class="personal-best-note">Notes (optional)<input name="note" type="text" maxlength="240" placeholder="Meet, conditions, or other details"></label>
+          </div>
+          <label class="personal-best-share"><input name="share_with_team" type="checkbox"><span><strong>Share with the team</strong><small>When enabled, approved members can see this PB. You can change this later.</small></span></label>
+          <div class="profile-form-actions">
+            <button class="athletes-primary-button" type="submit"><span class="personal-best-submit-label">Save personal best</span><span aria-hidden="true">↗</span></button>
+            <button class="cancel-edit-button" id="cancel-personal-best-edit" type="button" hidden>Cancel edit</button>
+          </div>
+          <p class="form-status" id="personal-best-form-status" role="status" aria-live="polite"></p>
+        </form>
+        <section class="personal-best-list-section" aria-labelledby="my-personal-best-list-title">
+          <div class="directory-heading"><div><h4 id="my-personal-best-list-title">My saved PBs</h4><p id="my-personal-best-count">Your entries</p></div><button class="refresh-button" id="refresh-personal-bests" type="button" aria-label="Refresh personal bests">↻</button></div>
+          <p class="directory-status" id="my-personal-bests-status" role="status" aria-live="polite"></p>
+          <div class="personal-best-list" id="my-personal-best-list"></div>
+        </section>
+        <section class="personal-best-list-section team-personal-bests" aria-labelledby="team-personal-best-title">
+          <div class="directory-heading"><div><h4 id="team-personal-best-title">Team-shared personal bests</h4><p>PBs athletes have chosen to share</p></div></div>
+          <p class="directory-status" id="team-personal-bests-status" role="status" aria-live="polite"></p>
+          <div class="personal-best-list" id="team-personal-best-list"></div>
+        </section>
+      </section>
       <section class="membership-admin" id="membership-admin" aria-labelledby="membership-admin-title" hidden>
         <div class="directory-heading">
           <div><h3 id="membership-admin-title">Membership requests</h3><p id="membership-request-count">Pending team accounts</p></div>
