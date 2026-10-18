@@ -67,6 +67,12 @@
 .personal-best-form { margin-top: 18px; }
 .personal-best-form-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .personal-best-note { grid-column: 1 / -1; }
+.personal-best-sharing-setting { align-items: start; background: var(--bg); border: 1px solid var(--line); display: flex !important; gap: 11px !important; margin-top: 18px; padding: 13px 14px; }
+.personal-best-sharing-setting input { accent-color: var(--gold); flex: 0 0 auto; height: 16px; margin: 2px 0 0; min-height: 0; width: 16px; }
+.personal-best-sharing-setting span { display: grid; gap: 4px; }
+.personal-best-sharing-setting strong { color: var(--text); font-size: 11px; }
+.personal-best-sharing-setting small { color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.5; }
+.personal-best-sharing-status { margin-top: 7px; }
 .personal-best-share { align-items: start; display: flex !important; gap: 11px !important; margin-top: 1px; }
 .personal-best-share input { accent-color: var(--gold); flex: 0 0 auto; height: 16px; margin: 2px 0 0; min-height: 0; width: 16px; }
 .personal-best-share span { display: grid; gap: 4px; }
@@ -86,6 +92,10 @@
 .personal-best-actions button { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 9px; padding: 8px 11px; }
 .personal-best-actions button:hover { border-color: var(--gold); color: var(--text); }
 .personal-best-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.personal-best-admin-self { border-bottom: 1px solid var(--line); margin-bottom: 24px; padding-bottom: 24px; }
+.personal-best-admin-self .profile-editor-heading .eyebrow { color: var(--gold); margin: 0 0 9px; }
+.personal-best-admin-self .profile-editor-heading h3 { font: 600 26px var(--display); margin: 0; }
+.personal-best-admin-self .profile-editor-heading > p:last-child { color: var(--muted); font-size: 10px; line-height: 1.7; margin: 6px 0 0; }
 .profile-records .directory-heading { align-items: flex-start; }
 .profile-records .directory-heading .eyebrow { color: var(--gold); margin: 0 0 9px; }
 .profile-records .directory-heading h3 { font: 600 26px var(--display); margin: 0; }
@@ -157,6 +167,66 @@
 .admin-return-link[hidden] { display: none; }
 .reset-password-main .auth-card { margin-top: 0; }
 .reset-password-main .admin-return-link { margin-top: 16px; }
+.admin-tabs { border-bottom: 1px solid var(--line); display: flex; gap: 7px; margin: 0 0 22px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.admin-tab { background: transparent; border: 1px solid transparent; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; flex: 0 0 auto; font: 600 11px var(--body); padding: 13px 16px 12px; white-space: nowrap; }
+.admin-tab:hover, .admin-tab.active { color: var(--text); }
+.admin-tab.active { border-bottom-color: var(--gold); }
+.admin-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.admin-tab-panel[hidden] { display: none; }
+.record-category-tabs { border-bottom: 1px solid var(--line); display: flex; gap: 5px; margin: 22px 0 18px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.record-category-tab { background: transparent; border: 1px solid transparent; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; flex: 0 0 auto; font: 600 11px var(--body); padding: 12px 15px; white-space: nowrap; }
+.record-category-tab:hover, .record-category-tab.active { color: var(--text); }
+.record-category-tab.active { border-bottom-color: var(--gold); }
+.record-category-tab:focus-visible, .record-team-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.record-category-panel[hidden] { display: none; }
+.record-team-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; margin: 15px 0; }
+.record-team-tabs { border: 1px solid var(--line); display: inline-flex; }
+.record-team-tab { background: transparent; border: 0; color: var(--muted); cursor: pointer; font: 600 10px var(--body); min-width: 78px; padding: 10px 15px; }
+.record-team-tab + .record-team-tab { border-left: 1px solid var(--line); }
+.record-team-tab.active { background: var(--gold); color: var(--bg); }
+.record-import-toolbar { display: flex; justify-content: flex-end; margin: -2px 0 14px; }
+.record-import-panel { background: var(--bg); border: 1px solid var(--line); margin: 0 0 20px; padding: clamp(14px, 2.2vw, 22px); }
+.record-import-panel[hidden], .record-import-preview[hidden] { display: none; }
+.record-import-heading h4, .record-import-preview-heading h5 { color: var(--text); font: 600 20px var(--display); margin: 0; }
+.record-import-heading p, .record-import-preview-heading p, .record-import-hint { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 5px 0 0; }
+.record-import-settings { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 17px; }
+.record-import-settings label { color: var(--text); display: grid; font-size: 10px; font-weight: 600; gap: 7px; }
+.record-import-settings select, .record-import-settings input { background: var(--panel); border: 1px solid var(--line); color: var(--text); font: 400 11px/1.5 var(--body); min-height: 42px; padding: 9px 10px; width: 100%; }
+.record-import-settings input[type="file"] { min-width: 0; }
+.record-import-settings select:focus, .record-import-settings input:focus { border-color: var(--gold); outline: 1px solid var(--gold); }
+.record-import-hint { margin-top: 11px; }
+.record-import-status { margin-top: 9px; }
+.record-import-preview { border-top: 1px solid var(--line); margin-top: 17px; padding-top: 17px; }
+.record-import-preview-heading { align-items: start; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 12px; }
+.record-import-preview-heading h5 { font-size: 18px; }
+.record-import-preview-heading > span { color: var(--gold); font-size: 10px; }
+.record-import-table-wrap { max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+.record-import-table { border-collapse: collapse; font-size: 10px; min-width: 1030px; text-align: left; width: 100%; }
+.record-import-table th { background: var(--panel); color: var(--muted); font-size: 9px; letter-spacing: .04em; padding: 9px; white-space: nowrap; }
+.record-import-table td { border-top: 1px solid var(--line); padding: 6px; vertical-align: top; }
+.record-import-table tr.has-import-warning td { background: color-mix(in srgb, var(--red) 5%, var(--bg)); }
+.record-import-table input[type="text"] { background: var(--panel); border: 1px solid var(--line); color: var(--text); font: 400 10px/1.45 var(--body); min-height: 36px; padding: 7px 8px; width: 100%; }
+.record-import-table input[type="text"]:focus { border-color: var(--gold); outline: 1px solid var(--gold); }
+.record-import-table input[type="checkbox"] { accent-color: var(--gold); height: 17px; margin: 8px; width: 17px; }
+.record-import-table [data-import-review] { color: var(--muted); display: block; line-height: 1.5; max-width: 220px; min-width: 155px; }
+.record-import-table .has-import-warning [data-import-review] { color: var(--red); }
+.record-import-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.record-import-actions button:focus-visible, #record-import-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.record-form-context { color: var(--muted); font-size: 11px; margin: 0 0 15px; }
+.record-form-context strong { color: var(--text); }
+.record-category-panel .admin-record-list { border-top: 0; margin-top: 14px; padding-top: 0; }
+.admin-panel-profiles { min-width: 0; }
+.admin-dashboard-grid { grid-template-columns: minmax(0, 1fr) !important; }
+.admin-profile-toolbar { align-items: center; display: flex; gap: 18px; justify-content: space-between; }
+.admin-add-button { flex: 0 0 auto; }
+.athlete-form[hidden], .record-form[hidden] { display: none; }
+.list-pagination { align-items: center; display: flex; gap: 14px; justify-content: center; margin-top: 18px; }
+.list-pagination[hidden] { display: none; }
+.list-pagination button { background: transparent; border: 1px solid var(--line); color: var(--text); cursor: pointer; font: 500 10px var(--body); min-height: 36px; min-width: 72px; padding: 8px 12px; }
+.list-pagination button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.list-pagination button:disabled { cursor: not-allowed; opacity: .45; }
+.list-pagination button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.list-pagination span { color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
 
 .admin-page .athletes-main { max-width: 1560px; padding-left: 8%; padding-right: 8%; }
 .admin-page .admin-intro { border-bottom: 1px solid var(--line); margin-bottom: 34px; max-width: none; padding-bottom: 28px; }
@@ -236,6 +306,20 @@
   .admin-page .dashboard-heading { align-items: flex-start; gap: 14px; }
   .admin-page .dashboard-heading .signout-button { flex: 0 0 auto; }
   .admin-page .admin-dashboard-grid { grid-template-columns: 1fr; }
+  .admin-tabs { gap: 2px; margin-bottom: 16px; }
+  .admin-tab { padding: 12px 13px; }
+  .record-category-tabs { gap: 1px; margin: 17px 0 13px; }
+  .record-category-tab { padding: 11px 12px; }
+  .record-team-toolbar { align-items: flex-start; flex-direction: column; }
+  .record-team-tabs { width: 100%; }
+  .record-team-tab { flex: 1; }
+  .record-import-toolbar { justify-content: flex-start; }
+  .record-import-settings { grid-template-columns: 1fr; }
+  .record-import-actions { align-items: stretch; flex-direction: column; }
+  .record-import-actions button { justify-content: space-between; width: 100%; }
+  .admin-profile-toolbar { align-items: flex-start; flex-direction: column; }
+  .list-pagination { gap: 9px; }
+  .list-pagination button { min-width: 65px; }
   .record-form-grid { grid-template-columns: 1fr; }
   .dashboard-actions { justify-content: flex-end; }
   .admin-access-denied .signout-button { margin: 12px 0 0; }

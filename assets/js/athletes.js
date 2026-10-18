@@ -9,24 +9,32 @@ const athleteDashboard = document.querySelector('#athlete-dashboard');
 const authStatus = document.querySelector('#auth-status');
 const loginForm = document.querySelector('#login-form');
 const forgotPasswordButton = document.querySelector('#forgot-password-button');
+const adminTabs = document.querySelector('#admin-tabs');
+const addProfileButton = document.querySelector('#add-profile-button');
 const signupForm = document.querySelector('#signup-form');
 const authModeToggle = document.querySelector('#auth-mode-toggle');
 const loginModeToggle = document.querySelector('#login-mode-toggle');
 const membershipPending = document.querySelector('#membership-pending');
 const athleteForm = document.querySelector('#athlete-form');
 const athleteList = document.querySelector('#athlete-list');
+const profilesPagination = document.querySelector('#profiles-pagination');
 const personalBestSection = document.querySelector('#personal-bests');
 const personalBestForm = document.querySelector('#personal-best-form');
 const personalBestFormStatus = document.querySelector('#personal-best-form-status');
 const personalBestSubmitLabel = document.querySelector('.personal-best-submit-label');
 const cancelPersonalBestEdit = document.querySelector('#cancel-personal-best-edit');
 const myPersonalBestList = document.querySelector('#my-personal-best-list');
+const myPersonalBestPagination = document.querySelector('#my-personal-best-pagination');
 const myPersonalBestCount = document.querySelector('#my-personal-best-count');
 const myPersonalBestsStatus = document.querySelector('#my-personal-bests-status');
+const personalBestSharingToggle = document.querySelector('#personal-best-sharing-toggle');
+const personalBestSharingStatus = document.querySelector('#personal-best-sharing-status');
 const teamPersonalBestList = document.querySelector('#team-personal-best-list');
+const teamPersonalBestPagination = document.querySelector('#team-personal-best-pagination');
 const teamPersonalBestsStatus = document.querySelector('#team-personal-bests-status');
 const personalBestAdmin = document.querySelector('#personal-best-admin');
 const personalBestAdminList = document.querySelector('#personal-best-admin-list');
+const personalBestAdminPagination = document.querySelector('#personal-best-admin-pagination');
 const personalBestAdminStatus = document.querySelector('#personal-best-admin-status');
 const formStatus = document.querySelector('#form-status');
 const directoryStatus = document.querySelector('#directory-status');
@@ -34,20 +42,23 @@ const directoryCount = document.querySelector('#directory-count');
 const cancelEditButton = document.querySelector('#cancel-edit-button');
 const membershipAdmin = document.querySelector('#membership-admin');
 const membershipRequestList = document.querySelector('#membership-request-list');
+const membershipPagination = document.querySelector('#membership-pagination');
 const membershipRequestCount = document.querySelector('#membership-request-count');
 const membershipStatus = document.querySelector('#membership-status');
 const profileEditor = document.querySelector('#profile-editor');
 const adminDashboardLink = document.querySelector('#admin-dashboard-link');
 const recordAdmin = document.querySelector('#record-admin');
-const recordForm = document.querySelector('#record-form');
-const recordFormStatus = document.querySelector('#record-form-status');
-const adminRecordList = document.querySelector('#admin-record-list');
-const adminRecordCount = document.querySelector('#admin-record-count');
-const adminRecordsStatus = document.querySelector('#admin-records-status');
+const recordForms = new Map([...document.querySelectorAll('[data-record-form]')].map(form => [form.dataset.recordForm, form]));
+const addRecordButtons = new Map([...document.querySelectorAll('[data-add-record]')].map(button => [button.dataset.addRecord, button]));
+const recordCategoryTabs = document.querySelector('#record-category-tabs');
+const recordCategoryPanels = new Map([...document.querySelectorAll('[data-record-panel]')].map(panel => [panel.dataset.recordPanel, panel]));
+const recordFormFieldsTemplate = document.querySelector('#record-form-fields-template');
+const adminRecordLists = new Map([...document.querySelectorAll('[data-record-list]')].map(list => [list.dataset.recordList, list]));
+const recordListStatuses = new Map([...document.querySelectorAll('[data-record-list-status]')].map(status => [status.dataset.recordListStatus, status]));
+const recordListPaginations = new Map([...document.querySelectorAll('[data-record-pagination]')].map(nav => [nav.dataset.recordPagination, nav]));
 const recordsStatus = document.querySelector('#records-status');
-const cancelRecordEditButton = document.querySelector('#cancel-record-edit-button');
-const refreshRecordsButton = document.querySelector('#refresh-records-button');
 const refreshAdminRecordsButton = document.querySelector('#refresh-admin-records-button');
+const refreshRecordsButton = document.querySelector('#refresh-records-button');
 const refreshPersonalBestsButton = document.querySelector('#refresh-personal-bests');
 const refreshPersonalBestAdminButton = document.querySelector('#refresh-personal-best-admin');
 const profileRecordMenu = document.querySelector('#profile-record-menu');
@@ -56,8 +67,6 @@ const profileRecordSelected = document.querySelector('#profile-record-selected')
 const profileRecordRows = document.querySelector('#profile-record-rows');
 const profileBoysTab = document.querySelector('#profile-boys-tab');
 const profileGirlsTab = document.querySelector('#profile-girls-tab');
-const customRecordTypeField = document.querySelector('#custom-record-type-field');
-const customRecordTypeInput = recordForm?.elements.namedItem('custom_record_type');
 const RECORD_CATEGORIES = {
   inter_iit: 'Inter-IIT Records',
   institute: 'Institute Records',
@@ -77,6 +86,28 @@ let currentRole = '';
 let currentUserId = '';
 let currentUserName = '';
 let sessionBeingHandled = '';
+let personalBestSharingChannel = null;
+let personalBestSharingReloadTimer = 0;
+const personalBestSharingByOwner = new Map();
+const listPages = new Map();
+const LIST_PAGE_SIZE = 10;
+let savedAdminRecords = [];
+let renderAdminRecord = null;
+let selectedAdminRecordCategory = 'inter_iit';
+const selectedAdminRecordTeams = new Map([
+  ['inter_iit', 'boys'],
+  ['institute', 'boys'],
+  ['other', 'boys'],
+]);
+const isCoreRecordType = recordType => recordType === 'inter_iit' || recordType === 'institute';
+
+if (recordFormFieldsTemplate) {
+  for (const [category, form] of recordForms) {
+    if (category !== 'other') {
+      form.querySelector('[data-record-fields]').replaceChildren(recordFormFieldsTemplate.content.cloneNode(true));
+    }
+  }
+}
 
 function setTheme(theme) {
   const isLight = theme === 'light';
@@ -104,18 +135,181 @@ document.addEventListener('pointerdown', event => {
   if (profileRecordMenu && !profileRecordMenu.contains(event.target)) profileRecordMenu.open = false;
 });
 
-customRecordTypeField?.setAttribute('hidden', '');
-recordForm?.elements.namedItem('record_type').addEventListener('change', event => {
-  const isCustom = event.currentTarget.value === 'custom';
-  customRecordTypeField.hidden = !isCustom;
-  customRecordTypeInput.required = isCustom;
-  if (isCustom) customRecordTypeInput.focus();
-});
+for (const [category, form] of recordForms) {
+  if (category !== 'other') continue;
+  const categoryInput = form.elements.namedItem('record_type');
+  const customField = form.querySelector('[data-custom-record-type-field]');
+  const customInput = form.elements.namedItem('custom_record_type');
+  customField.hidden = true;
+  categoryInput.addEventListener('change', () => {
+    const isCustom = categoryInput.value === 'custom';
+    customField.hidden = !isCustom;
+    customInput.required = isCustom;
+    if (isCustom) customInput.focus();
+  });
+}
 
 function setStatus(element, message, state = '') {
   element.textContent = message;
   element.dataset.state = state;
 }
+
+function renderPaginatedList(container, pagination, items, renderItem, listKey) {
+  if (!container) return;
+  const pageCount = Math.max(1, Math.ceil(items.length / LIST_PAGE_SIZE));
+  const page = Math.min(listPages.get(listKey) ?? 1, pageCount);
+  listPages.set(listKey, page);
+  const start = (page - 1) * LIST_PAGE_SIZE;
+  container.replaceChildren(...items.slice(start, start + LIST_PAGE_SIZE).map(renderItem));
+  if (!pagination) return;
+
+  pagination.replaceChildren();
+  pagination.hidden = pageCount <= 1;
+  if (pagination.hidden) return;
+
+  const previous = document.createElement('button');
+  previous.type = 'button';
+  previous.textContent = 'Previous';
+  previous.disabled = page === 1;
+  previous.addEventListener('click', () => {
+    listPages.set(listKey, page - 1);
+    renderPaginatedList(container, pagination, items, renderItem, listKey);
+  });
+  const pageStatus = document.createElement('span');
+  pageStatus.textContent = `Page ${page} of ${pageCount}`;
+  pageStatus.setAttribute('aria-live', 'polite');
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.textContent = 'Next';
+  next.disabled = page === pageCount;
+  next.addEventListener('click', () => {
+    listPages.set(listKey, page + 1);
+    renderPaginatedList(container, pagination, items, renderItem, listKey);
+  });
+  pagination.append(previous, pageStatus, next);
+}
+
+function renderAdminRecordLists() {
+  if (!renderAdminRecord) return;
+  for (const category of recordCategoryPanels.keys()) {
+    const team = selectedAdminRecordTeams.get(category) ?? 'boys';
+    const records = savedAdminRecords.filter(record =>
+      (category === 'other' ? !isCoreRecordType(record.record_type) : record.record_type === category)
+      && record.team === team);
+    const list = adminRecordLists.get(category);
+    const pagination = recordListPaginations.get(category);
+    renderPaginatedList(list, pagination, records, renderAdminRecord, `records:${category}:${team}`);
+    const status = recordListStatuses.get(category);
+    if (status && records.length === 0) {
+      const categoryName = category === 'other' ? 'other-category' : (RECORD_CATEGORIES[category] ?? category);
+      setStatus(status, `No ${team} ${categoryName} records yet.`);
+    } else if (status) {
+      setStatus(status, '');
+    }
+  }
+}
+
+function initializeAdminTabs() {
+  if (!adminTabs) return;
+  const tabs = [...adminTabs.querySelectorAll('[role="tab"]')];
+  const panels = tabs.map(tab => document.getElementById(tab.getAttribute('aria-controls')));
+  if (tabs.length === 0 || panels.some(panel => !panel)) return;
+
+  function activateTab(index, moveFocus = false) {
+    tabs.forEach((tab, tabIndex) => {
+      const active = tabIndex === index;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      panels[tabIndex].hidden = !active;
+    });
+    if (moveFocus) tabs[index].focus();
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => activateTab(index));
+    tab.addEventListener('keydown', event => {
+      let nextIndex = index;
+      if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      activateTab(nextIndex, true);
+    });
+  });
+  activateTab(Math.max(0, tabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true')));
+}
+
+initializeAdminTabs();
+
+function initializeAdminRecordFilters() {
+  if (!recordCategoryTabs || recordCategoryPanels.size === 0) return;
+
+  function activateCategory(category, moveFocus = false) {
+    selectedAdminRecordCategory = category;
+    for (const tab of recordCategoryTabs.querySelectorAll('[role="tab"]')) {
+      const active = tab.dataset.recordCategory === category;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      const panel = recordCategoryPanels.get(tab.dataset.recordCategory);
+      if (panel) panel.hidden = !active;
+      if (active && moveFocus) tab.focus();
+    }
+    renderAdminRecordLists();
+  }
+
+  for (const tab of recordCategoryTabs.querySelectorAll('[role="tab"]')) {
+    tab.addEventListener('click', () => activateCategory(tab.dataset.recordCategory));
+    tab.addEventListener('keydown', event => {
+      const categoryTabs = [...recordCategoryTabs.querySelectorAll('[role="tab"]')];
+      const index = categoryTabs.indexOf(tab);
+      let nextIndex = index;
+      if (event.key === 'ArrowRight') nextIndex = (index + 1) % categoryTabs.length;
+      else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + categoryTabs.length) % categoryTabs.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = categoryTabs.length - 1;
+      else return;
+      event.preventDefault();
+      activateCategory(categoryTabs[nextIndex].dataset.recordCategory, true);
+    });
+  }
+
+  for (const panel of recordCategoryPanels.values()) {
+    for (const teamTab of panel.querySelectorAll('[data-record-team]')) {
+      teamTab.addEventListener('click', () => {
+        const category = panel.dataset.recordPanel;
+        selectedAdminRecordTeams.set(category, teamTab.dataset.recordTeam);
+        updateRecordTeamTabs(panel);
+        renderAdminRecordLists();
+      });
+      teamTab.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        const nextTeam = teamTab.dataset.recordTeam === 'boys' ? 'girls' : 'boys';
+        const nextTab = panel.querySelector(`[data-record-team="${nextTeam}"]`);
+        nextTab.click();
+        nextTab.focus();
+      });
+    }
+  }
+
+  activateCategory(selectedAdminRecordCategory);
+}
+
+function updateRecordTeamTabs(panel) {
+  const category = panel.dataset.recordPanel;
+  const selectedTeam = selectedAdminRecordTeams.get(category) ?? 'boys';
+  for (const tab of panel.querySelectorAll('[data-record-team]')) {
+    const active = tab.dataset.recordTeam === selectedTeam;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-pressed', String(active));
+  }
+}
+
+initializeAdminRecordFilters();
 
 function disableAuthForms() {
   [loginForm, signupForm].forEach(form => {
@@ -160,8 +354,442 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
   setStatus(authStatus, 'The Supabase client did not load. Check your network connection and reload this page.', 'error');
 } else {
   const supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+  const recordImportToggle = document.querySelector('#record-import-toggle');
+  const recordImportPanel = document.querySelector('#record-import-panel');
+  const recordImportCategory = document.querySelector('#record-import-category');
+  const recordImportTeam = document.querySelector('#record-import-team');
+  const recordImportFile = document.querySelector('#record-import-file');
+  const recordImportStatus = document.querySelector('#record-import-status');
+  const recordImportPreview = document.querySelector('#record-import-preview');
+  const recordImportSummary = document.querySelector('#record-import-summary');
+  const recordImportContext = document.querySelector('#record-import-context');
+  const recordImportRows = document.querySelector('#record-import-rows');
+  const recordImportSave = document.querySelector('#record-import-save');
+  const recordImportCancel = document.querySelector('#record-import-cancel');
+  const recordImportEvents = document.querySelector('#record-import-events');
+  const recordImportLibraries = new Map();
+  let parsedImportRows = [];
+
+  function loadRecordImportLibrary(src, libraryKey) {
+    if (recordImportLibraries.has(libraryKey)) return recordImportLibraries.get(libraryKey);
+    const promise = import(src).catch(error => {
+      recordImportLibraries.delete(libraryKey);
+      throw new Error(`Could not load the ${libraryKey} reader. Check your internet connection and try again. ${error.message}`);
+    });
+    recordImportLibraries.set(libraryKey, promise);
+    return promise;
+  }
+
+  function buildPdfTextLines(textItems) {
+    const items = textItems
+      .filter(item => item.str?.trim())
+      .map(item => ({
+        text: item.str.trim(),
+        x: item.transform[4],
+        y: item.transform[5],
+        width: item.width ?? 0,
+        fontSize: Math.hypot(item.transform[0], item.transform[1]) || 10,
+      }))
+      .sort((a, b) => b.y - a.y || a.x - b.x);
+    const lines = [];
+    for (const item of items) {
+      let line = lines.find(candidate => Math.abs(candidate.y - item.y) <= 2.5);
+      if (!line) {
+        line = { y: item.y, items: [] };
+        lines.push(line);
+      }
+      line.items.push(item);
+    }
+    return lines
+      .sort((a, b) => b.y - a.y)
+      .map(line => {
+        const ordered = line.items.sort((a, b) => a.x - b.x);
+        let value = '';
+        let previousEnd = null;
+        for (const item of ordered) {
+          if (previousEnd !== null) {
+            const gap = item.x - previousEnd;
+            const averageCharacterWidth = Math.max(2, item.fontSize * 0.28);
+            value += gap > item.fontSize * 1.25
+              ? ' '.repeat(Math.min(16, Math.max(2, Math.round(gap / averageCharacterWidth))))
+              : ' ';
+          }
+          value += item.text;
+          previousEnd = item.x + item.width;
+        }
+        return value;
+      });
+  }
+
+  function importRecordValidation(record) {
+    const errors = [];
+    if (!record.event) errors.push('Event is missing.');
+    else if (!window.ATHLETICS_RECORD_IMPORT.isValidEvent(record.event)) errors.push('Choose a supported event.');
+    if (!record.athlete) errors.push('Athlete name is missing.');
+    if (!record.performance) errors.push('Performance is missing.');
+    if (!record.record_label) errors.push('Year / meet is missing.');
+    if (record.athlete.length > 300) errors.push('Athlete name exceeds 300 characters.');
+    if (record.performance.length > 50) errors.push('Performance exceeds 50 characters.');
+    if (record.record_label.length > 80) errors.push('Year / meet exceeds 80 characters.');
+    if (record.college.length > 100) errors.push('College exceeds 100 characters.');
+    return errors;
+  }
+
+  function importDuplicateReason(record, rowIndex) {
+    const normalize = value => window.ATHLETICS_RECORD_IMPORT.normalizeHeader(value);
+    const matches = candidate => candidate.team === record.team
+      && candidate.record_type === record.record_type
+      && normalize(candidate.event) === normalize(record.event)
+      && normalize(candidate.athlete) === normalize(record.athlete)
+      && normalize(candidate.performance) === normalize(record.performance)
+      && normalize(candidate.record_label) === normalize(record.record_label);
+    if (savedAdminRecords.some(matches)) return 'Possible duplicate of an existing saved record.';
+    if (parsedImportRows.slice(0, rowIndex).some(row => matches({
+      ...row.record,
+      team: record.team,
+      record_type: record.record_type,
+    }))) return 'Possible duplicate of another row in this file.';
+    return '';
+  }
+
+  function refreshRecordImportReview() {
+    if (!recordImportPreview || recordImportPreview.hidden) return;
+    const renderedRows = [...recordImportRows.querySelectorAll('[data-import-row]')];
+    let validSelected = 0;
+    let invalidSelected = 0;
+    let excluded = 0;
+    let selectedDuplicates = 0;
+    renderedRows.forEach((rowElement, index) => {
+      const row = parsedImportRows[index];
+      const record = Object.fromEntries([...rowElement.querySelectorAll('[data-import-field]')].map(input => [input.dataset.importField, input.value.trim()]));
+      row.record = record;
+      const errors = importRecordValidation(record);
+      const duplicate = importDuplicateReason({
+        ...record,
+        team: recordImportTeam.value,
+        record_type: recordImportCategory.value,
+      }, index);
+      const messages = [...errors, ...(duplicate ? [duplicate] : [])];
+      rowElement.classList.toggle('has-import-warning', messages.length > 0);
+      rowElement.querySelector('[data-import-review]').textContent = messages.length ? messages.join(' ') : 'Ready';
+      const include = rowElement.querySelector('[data-import-include]').checked;
+      if (!include) {
+        excluded += 1;
+      } else if (errors.length) {
+        invalidSelected += 1;
+      } else {
+        validSelected += 1;
+        if (duplicate) selectedDuplicates += 1;
+      }
+    });
+    recordImportSummary.textContent = `${parsedImportRows.length} rows · ${validSelected} ready to import · ${invalidSelected} selected need fixing · ${excluded} excluded`;
+    recordImportSave.disabled = validSelected === 0 || invalidSelected > 0;
+    recordImportSave.firstChild.textContent = validSelected
+      ? `Import ${validSelected} selected record${validSelected === 1 ? '' : 's'} `
+      : 'Import selected records ';
+    recordImportSave.dataset.selectedDuplicates = String(selectedDuplicates);
+  }
+
+  function renderRecordImportPreview(records) {
+    parsedImportRows = records.map(record => ({
+      record,
+      initiallyIncluded: importRecordValidation(record).length === 0,
+    }));
+    recordImportRows.replaceChildren(...parsedImportRows.map((item, index) => {
+      const row = document.createElement('tr');
+      row.dataset.importRow = '';
+      const includeCell = document.createElement('td');
+      const include = document.createElement('input');
+      include.type = 'checkbox';
+      include.checked = item.initiallyIncluded && !importDuplicateReason({
+        ...item.record,
+        team: recordImportTeam.value,
+        record_type: recordImportCategory.value,
+      }, index);
+      include.setAttribute('aria-label', `Include imported row ${record.sourceRow ?? index + 1}`);
+      include.dataset.importInclude = '';
+      includeCell.append(include);
+      row.append(includeCell);
+
+      for (const [field, label, maxLength] of [
+        ['event', 'Event', 40],
+        ['athlete', 'Athlete(s)', 300],
+        ['performance', 'Performance', 50],
+        ['record_label', 'Year / meet', 80],
+        ['college', 'College', 100],
+      ]) {
+        const cell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = item.record[field] ?? '';
+        input.maxLength = maxLength;
+        input.dataset.importField = field;
+        input.setAttribute('aria-label', `${label}, imported row ${record.sourceRow ?? index + 1}`);
+        if (field === 'event') input.setAttribute('list', 'record-import-events');
+        cell.append(input);
+        row.append(cell);
+      }
+
+      const reviewCell = document.createElement('td');
+      const review = document.createElement('span');
+      review.dataset.importReview = '';
+      reviewCell.append(review);
+      row.append(reviewCell);
+      row.addEventListener('input', refreshRecordImportReview);
+      row.addEventListener('change', refreshRecordImportReview);
+      return row;
+    }));
+    const category = recordImportCategory.value;
+    const team = recordImportTeam.value;
+    recordImportContext.textContent = `${category === 'inter_iit' ? 'Inter IIT' : 'Institute'} Records · ${team === 'boys' ? 'Boys' : 'Girls'}`;
+    recordImportCategory.disabled = true;
+    recordImportTeam.disabled = true;
+    recordImportPreview.hidden = false;
+    refreshRecordImportReview();
+  }
+
+  async function readRecordImportFile(file) {
+    const extension = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'csv', 'pdf'].includes(extension)) throw new Error('Choose an .xlsx, .csv, or text-based .pdf file.');
+    if (file.size === 0) throw new Error('The selected file is empty.');
+    if (file.size > 15 * 1024 * 1024) throw new Error('The file is larger than 15 MB. Reduce its size and try again.');
+    if (extension === 'csv') {
+      const parsed = window.ATHLETICS_RECORD_IMPORT.parseCsv(await file.text());
+      if (parsed.error) throw new Error(parsed.error);
+      return parsed.records;
+    }
+    if (extension === 'xlsx') {
+      const XLSX = await loadRecordImportLibrary('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs', 'xlsx');
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
+      const firstSheet = workbook.SheetNames[0];
+      if (!firstSheet) throw new Error('The Excel workbook does not contain a worksheet.');
+      const parsed = window.ATHLETICS_RECORD_IMPORT.parseGrid(XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], {
+        header: 1,
+        raw: false,
+        defval: '',
+      }));
+      if (parsed.error) throw new Error(parsed.error);
+      return parsed.records;
+    }
+
+    const pdfjs = await loadRecordImportLibrary('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.mjs', 'pdfjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.worker.mjs';
+    const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    if (pdf.numPages > 30) throw new Error('This PDF has more than 30 pages. Split it into smaller files and try again.');
+    const textLines = [];
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      textLines.push(...buildPdfTextLines(content.items));
+    }
+    const text = textLines.join('\n');
+    if (text.replace(/\s/g, '').length < 30) {
+      throw new Error('No usable text was found in this PDF. It may be scanned or image-only; OCR is not supported. No data was imported.');
+    }
+    const parsed = window.ATHLETICS_RECORD_IMPORT.parsePdfText(text);
+    if (parsed.error) throw new Error(parsed.error);
+    const unreliableRow = parsed.records.find(record =>
+      !window.ATHLETICS_RECORD_IMPORT.isValidEvent(record.event)
+      || !record.athlete
+      || !/\d/.test(record.performance)
+      || !record.record_label);
+    if (unreliableRow) {
+      throw new Error('The PDF text could not be aligned into complete event, athlete, performance, and year/meet columns. No data was imported. Export it as CSV or Excel, or use a simpler text-based table PDF.');
+    }
+    return parsed.records;
+  }
+
+  function clearRecordImportPreview(clearFile = true) {
+    parsedImportRows = [];
+    recordImportRows.replaceChildren();
+    recordImportPreview.hidden = true;
+    recordImportCategory.disabled = false;
+    recordImportTeam.disabled = false;
+    recordImportFile.disabled = !(recordImportCategory.value && recordImportTeam.value);
+    recordImportSave.disabled = true;
+    recordImportSave.dataset.selectedDuplicates = '0';
+    if (clearFile) recordImportFile.value = '';
+  }
+
+  async function savePersonalBestSharingPreference() {
+    if (!personalBestSharingToggle || !personalBestSharingStatus) return;
+    if (!['member', 'admin'].includes(currentRole)) {
+      setStatus(personalBestSharingStatus, 'Sign in with an approved team or admin account to change this setting.', 'error');
+      return;
+    }
+    const previousValue = personalBestSharingByOwner.get(currentUserId) === true;
+    const nextValue = personalBestSharingToggle.checked;
+    personalBestSharingToggle.disabled = true;
+    setStatus(personalBestSharingStatus, 'Updating your team-sharing preference…');
+    try {
+      const { error } = await supabaseClient
+        .from('athlete_personal_best_preferences')
+        .upsert({ user_id: currentUserId, share_with_team: nextValue }, { onConflict: 'user_id' });
+      if (error) throw error;
+    } catch (error) {
+      personalBestSharingToggle.disabled = false;
+      personalBestSharingToggle.checked = previousValue;
+      console.error('Unable to update personal-best sharing preference.', error);
+      setStatus(personalBestSharingStatus, `Could not update sharing preference: ${error.message || 'network error'}`, 'error');
+      return;
+    }
+    personalBestSharingToggle.disabled = false;
+    personalBestSharingByOwner.set(currentUserId, nextValue);
+    await loadPersonalBests();
+    setStatus(personalBestSharingStatus, nextValue
+      ? 'All your personal bests are now visible to approved, email-verified team members.'
+      : 'Team access to all your personal bests has been turned off.', 'success');
+  }
+
+  function startPersonalBestSharingWatcher() {
+    if (personalBestSharingChannel) supabaseClient.removeChannel(personalBestSharingChannel);
+    personalBestSharingChannel = supabaseClient
+      .channel('athlete-personal-best-sharing')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'athlete_personal_best_preferences',
+      }, () => {
+        window.clearTimeout(personalBestSharingReloadTimer);
+        personalBestSharingReloadTimer = window.setTimeout(() => {
+          loadPersonalBests();
+        }, 150);
+      })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Live personal-best sharing updates are unavailable.', status);
+          if (personalBestSharingStatus) {
+            setStatus(personalBestSharingStatus, 'Live sharing updates are unavailable. Refresh personal bests to check the latest visibility.', 'error');
+          }
+        }
+      });
+  }
+
+  function stopPersonalBestSharingWatcher() {
+    window.clearTimeout(personalBestSharingReloadTimer);
+    if (personalBestSharingChannel) {
+      supabaseClient.removeChannel(personalBestSharingChannel);
+      personalBestSharingChannel = null;
+    }
+  }
+
+  function initializeRecordImport() {
+    if (!recordImportToggle || !recordImportPanel || !recordImportFile || !window.ATHLETICS_RECORD_IMPORT) return;
+    recordImportFile.disabled = !(recordImportCategory.value && recordImportTeam.value);
+    recordImportEvents.replaceChildren(...window.ATHLETICS_RECORD_IMPORT.EVENTS.map(event => {
+      const option = document.createElement('option');
+      option.value = event;
+      return option;
+    }));
+    [recordImportCategory, recordImportTeam].forEach(select => {
+      select.addEventListener('change', () => {
+        recordImportFile.disabled = !(recordImportCategory.value && recordImportTeam.value);
+        if (recordImportFile.disabled) setStatus(recordImportStatus, 'Choose both a record category and team before selecting a file.');
+        else setStatus(recordImportStatus, 'Category and team selected. Choose an Excel, CSV, or text-based PDF file.');
+      });
+    });
+    recordImportToggle.addEventListener('click', () => {
+      if (currentRole !== 'admin' || !isAdminPage) return;
+      recordImportPanel.hidden = !recordImportPanel.hidden;
+      recordImportToggle.setAttribute('aria-expanded', String(!recordImportPanel.hidden));
+    });
+    recordImportFile.addEventListener('change', async () => {
+      const file = recordImportFile.files[0];
+      clearRecordImportPreview(false);
+      if (!file) return;
+      if (currentRole !== 'admin' || !isAdminPage) {
+        setStatus(recordImportStatus, 'Only an administrator can import records.', 'error');
+        return;
+      }
+      setStatus(recordImportStatus, 'Reading file locally…');
+      recordImportFile.disabled = true;
+      recordImportCategory.disabled = true;
+      recordImportTeam.disabled = true;
+      try {
+        const records = await readRecordImportFile(file);
+        if (records.length > 500) throw new Error('The file contains more than 500 rows. Split it into smaller files before importing.');
+        renderRecordImportPreview(records);
+        const duplicates = parsedImportRows.filter((row, index) => importDuplicateReason({
+          ...row.record,
+          team: recordImportTeam.value,
+          record_type: recordImportCategory.value,
+        }, index)).length;
+        setStatus(recordImportStatus, `Preview ready. Check every row before saving.${duplicates ? ` ${duplicates} possible duplicate${duplicates === 1 ? '' : 's'} flagged.` : ''}`);
+      } catch (error) {
+        console.error('Unable to parse athletics records import file.', error);
+        setStatus(recordImportStatus, error.message || 'Could not read this file. No records were imported.', 'error');
+        recordImportFile.value = '';
+        recordImportCategory.disabled = false;
+        recordImportTeam.disabled = false;
+      } finally {
+        recordImportFile.disabled = recordImportPreview.hidden
+          && !(recordImportCategory.value && recordImportTeam.value);
+      }
+    });
+    recordImportCancel.addEventListener('click', () => clearRecordImportPreview());
+    recordImportSave.addEventListener('click', async () => {
+      if (currentRole !== 'admin' || !isAdminPage) {
+        setStatus(recordImportStatus, 'Only an administrator can import records.', 'error');
+        return;
+      }
+      refreshRecordImportReview();
+      const rows = [...recordImportRows.querySelectorAll('[data-import-row]')];
+      const records = rows.filter(row => row.querySelector('[data-import-include]').checked)
+        .map(row => Object.fromEntries([...row.querySelectorAll('[data-import-field]')].map(input => [input.dataset.importField, input.value.trim()])));
+      if (!records.length || records.some(record => importRecordValidation(record).length)) {
+        setStatus(recordImportStatus, 'Fix required fields or uncheck incomplete rows before importing.', 'error');
+        return;
+      }
+      const duplicateCount = Number(recordImportSave.dataset.selectedDuplicates ?? 0);
+      const category = recordImportCategory.value;
+      const team = recordImportTeam.value;
+      if (!['institute', 'inter_iit'].includes(category) || !['boys', 'girls'].includes(team)) {
+        setStatus(recordImportStatus, 'Choose a valid record category and team before importing.', 'error');
+        return;
+      }
+      const categoryLabel = category === 'inter_iit' ? 'Inter IIT' : 'Institute';
+      const warning = duplicateCount
+        ? `\n\n${duplicateCount} selected row${duplicateCount === 1 ? ' is' : 's are'} flagged as possible duplicate${duplicateCount === 1 ? '' : 's'}.`
+        : '';
+      if (!window.confirm(`Import ${records.length} ${categoryLabel} ${team} record${records.length === 1 ? '' : 's'} into Supabase?${warning}\n\nOnly the selected rows will be saved.`)) return;
+
+      const payload = records.map(record => ({
+        record_type: category,
+        team,
+        event: window.ATHLETICS_RECORD_IMPORT.normalizeEvent(record.event),
+        athlete: record.athlete,
+        performance: record.performance,
+        record_label: record.record_label,
+        college: record.college,
+      }));
+      recordImportSave.disabled = true;
+      setStatus(recordImportStatus, `Saving ${payload.length} records…`);
+      try {
+        const { error } = await supabaseClient.from('athletics_records').insert(payload);
+        if (error) {
+          console.error('Unable to import athletics records.', error);
+          setStatus(recordImportStatus, `Could not import records: ${error.message}. No success was reported; check the preview and try again.`, 'error');
+          recordImportSave.disabled = false;
+          return;
+        }
+      } catch (error) {
+        console.error('The athletics records import request failed.', error);
+        setStatus(recordImportStatus, `Could not complete the import: ${error.message || 'network error'}. No success was reported; check the records before retrying.`, 'error');
+        recordImportSave.disabled = false;
+        return;
+      }
+      clearRecordImportPreview();
+      await loadAthleticsRecords();
+      recordCategoryTabs.querySelector(`[data-record-category="${category}"]`).click();
+      recordCategoryPanels.get(category).querySelector(`[data-record-team="${team}"]`).click();
+      setStatus(recordImportStatus, `${payload.length} ${categoryLabel} ${team} record${payload.length === 1 ? '' : 's'} imported successfully.`, 'success');
+    });
+  }
+
+  initializeRecordImport();
 
   function showLogin(message = '') {
+    stopPersonalBestSharingWatcher();
     authCard.hidden = false;
     membershipPending.hidden = true;
     athleteDashboard.hidden = true;
@@ -201,6 +829,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
 
   function setFormMode(profile = null) {
     athleteForm.reset();
+    athleteForm.hidden = isAdminPage && !profile;
+    if (addProfileButton) addProfileButton.hidden = isAdminPage && Boolean(profile);
     athleteForm.elements.namedItem('id').value = profile?.id ?? '';
     if (profile) {
       ['full_name', 'team', 'event', 'batch', 'photo_url', 'bio'].forEach(field => {
@@ -212,6 +842,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         ? 'Only you can edit your profile.'
         : 'Update the athlete profile.';
       cancelEditButton.hidden = false;
+      cancelEditButton.textContent = 'Cancel edit';
     } else {
       document.querySelector('#profile-form-title').textContent = 'Add an athlete';
       athleteForm.querySelector('.profile-submit-label').textContent = 'Save profile';
@@ -224,6 +855,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         profileEditor.querySelector('.profile-editor-heading p').textContent = 'Build a profile for the team directory.';
       }
       cancelEditButton.hidden = currentRole === 'member';
+      cancelEditButton.textContent = currentRole === 'admin' ? 'Cancel' : 'Cancel edit';
     }
     setStatus(formStatus, '');
   }
@@ -305,7 +937,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       return;
     }
 
-    athleteList.replaceChildren(...data.map(makeProfileCard));
+    renderPaginatedList(athleteList, profilesPagination, data, makeProfileCard, 'profiles');
     directoryCount.textContent = `${data.length} ${data.length === 1 ? 'profile' : 'profiles'}`;
     setStatus(directoryStatus, data.length ? '' : 'No athlete profiles yet.');
     if (currentRole === 'member') {
@@ -425,14 +1057,25 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     selectRecordTeam(selectedRecordTeam);
   }
 
-  function resetRecordForm() {
-    if (!recordForm) return;
-    recordForm.reset();
-    recordForm.elements.namedItem('id').value = '';
-    customRecordTypeField.hidden = true;
-    customRecordTypeInput.required = false;
-    recordForm.querySelector('.record-submit-label').textContent = 'Add record';
-    cancelRecordEditButton.hidden = true;
+  function resetRecordForm(form) {
+    if (!form) return;
+    const category = form.dataset.recordForm;
+    form.reset();
+    form.hidden = true;
+    form.elements.namedItem('id').value = '';
+    form.elements.namedItem('team').value = selectedAdminRecordTeams.get(category) ?? 'boys';
+    const categoryInput = form.elements.namedItem('record_type');
+    if (category !== 'other') categoryInput.value = category;
+    const customField = form.querySelector('[data-custom-record-type-field]');
+    if (customField) customField.hidden = true;
+    const customInput = form.elements.namedItem('custom_record_type');
+    if (customInput) customInput.required = false;
+    form.querySelector('.record-submit-label').textContent = 'Add record';
+    form.querySelector('[data-cancel-record-form]').hidden = true;
+    addRecordButtons.get(category).hidden = false;
+    form.querySelector('[data-record-form-status]').textContent = '';
+    const teamLabel = form.querySelector('[data-record-form-team]');
+    if (teamLabel) teamLabel.textContent = (selectedAdminRecordTeams.get(category) ?? 'boys') === 'boys' ? 'Boys' : 'Girls';
   }
 
   function makeAdminRecordCard(record) {
@@ -458,22 +1101,37 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     editButton.type = 'button';
     editButton.textContent = 'Edit';
     editButton.addEventListener('click', () => {
-      recordForm.elements.namedItem('id').value = record.id;
-      ['team', 'record_type', 'event', 'athlete', 'record_label', 'college', 'performance'].forEach(field => {
-        if (field === 'record_type') {
-          const categoryInput = recordForm.elements.namedItem(field);
-          const isBuiltIn = [...categoryInput.options].some(option => option.value === record.record_type);
-          categoryInput.value = isBuiltIn ? record.record_type : 'custom';
-          customRecordTypeInput.value = isBuiltIn ? '' : categoryTitle(record.record_type);
-          customRecordTypeField.hidden = isBuiltIn;
-          customRecordTypeInput.required = !isBuiltIn;
-        } else {
-          recordForm.elements.namedItem(field).value = record[field] ?? '';
+      const category = isCoreRecordType(record.record_type) ? record.record_type : 'other';
+      recordCategoryTabs.querySelector(`[data-record-category="${category}"]`).click();
+      const categoryPanel = recordCategoryPanels.get(category);
+      categoryPanel.querySelector(`[data-record-team="${record.team}"]`).click();
+      const form = recordForms.get(category);
+      const categoryInput = form.elements.namedItem('record_type');
+      if (category === 'other') {
+        const hasSavedOption = [...categoryInput.options].some(option => option.value === record.record_type);
+        if (!hasSavedOption) {
+          const option = document.createElement('option');
+          option.value = record.record_type;
+          option.textContent = categoryTitle(record.record_type);
+          categoryInput.insertBefore(option, categoryInput.querySelector('[value="custom"]'));
         }
+        categoryInput.value = record.record_type;
+      }
+      ['id', 'team', 'event', 'athlete', 'record_label', 'college', 'performance'].forEach(field => {
+        form.elements.namedItem(field).value = record[field] ?? '';
       });
-      recordForm.querySelector('.record-submit-label').textContent = 'Update record';
-      cancelRecordEditButton.hidden = false;
-      recordForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const customField = form.querySelector('[data-custom-record-type-field]');
+      if (customField) customField.hidden = true;
+      const customInput = form.elements.namedItem('custom_record_type');
+      if (customInput) customInput.required = false;
+      form.querySelector('.record-submit-label').textContent = 'Update record';
+      form.querySelector('[data-cancel-record-form]').hidden = false;
+      form.hidden = false;
+      addRecordButtons.get(category).hidden = true;
+      const teamLabel = form.querySelector('[data-record-form-team]');
+      if (teamLabel) teamLabel.textContent = record.team === 'boys' ? 'Boys' : 'Girls';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (category === 'other' ? categoryInput : form.elements.namedItem('event')).focus();
     });
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
@@ -483,10 +1141,10 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     card.append(details, actions);
     return card;
   }
+  renderAdminRecord = makeAdminRecordCard;
 
   async function loadAthleticsRecords() {
     if (recordsStatus) setStatus(recordsStatus, 'Loading all team records…');
-    if (adminRecordsStatus) setStatus(adminRecordsStatus, 'Loading saved records…');
     profileRecords = getPublishedRecords();
     renderProfileRecords();
     const { data, error } = await supabaseClient
@@ -498,7 +1156,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       renderProfileRecords();
       const message = `Could not load newer saved records: ${error.message}. Showing the published records.`;
       if (recordsStatus) setStatus(recordsStatus, message, 'error');
-      if (adminRecordsStatus) setStatus(adminRecordsStatus, message, 'error');
+      for (const status of recordListStatuses.values()) setStatus(status, message, 'error');
       return;
     }
 
@@ -506,11 +1164,24 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     renderProfileRecords();
     const recordCount = profileRecords.length;
     if (recordsStatus) setStatus(recordsStatus, `${recordCount} total ${recordCount === 1 ? 'record' : 'records'}`);
-    if (adminRecordList) {
-      adminRecordList.replaceChildren(...data.map(makeAdminRecordCard));
-      adminRecordCount.textContent = `${data.length} ${data.length === 1 ? 'record' : 'records'} · edit or remove any record`;
-      setStatus(adminRecordsStatus, data.length ? '' : 'No admin-managed records yet.');
+    savedAdminRecords = data;
+    const otherCategoryInput = recordForms.get('other')?.elements.namedItem('record_type');
+    if (otherCategoryInput) {
+      const existingValue = otherCategoryInput.value;
+      const savedOtherTypes = [...new Set(data.map(record => record.record_type).filter(recordType => !isCoreRecordType(recordType)))];
+      for (const option of [...otherCategoryInput.options]) {
+        if (!['', 'trials', 'sportsfest', 'summer_trials', 'sangram', 'custom'].includes(option.value)) option.remove();
+      }
+      for (const recordType of savedOtherTypes) {
+        if ([...otherCategoryInput.options].some(option => option.value === recordType)) continue;
+        const option = document.createElement('option');
+        option.value = recordType;
+        option.textContent = categoryTitle(recordType);
+        otherCategoryInput.insertBefore(option, otherCategoryInput.querySelector('[value="custom"]'));
+      }
+      if ([...otherCategoryInput.options].some(option => option.value === existingValue)) otherCategoryInput.value = existingValue;
     }
+    renderAdminRecordLists();
   }
 
   function makePersonalBestCard(record, { canEdit = false, canDelete = false, isAdmin = false, ownerName = '' } = {}) {
@@ -523,7 +1194,11 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     const achievedDate = record.achieved_on
       ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(`${record.achieved_on}T00:00:00`))
       : 'Date not provided';
-    meta.textContent = [ownerName, achievedDate, record.share_with_team ? 'Shared with team' : 'Private'].filter(Boolean).join(' · ');
+    const sharingEnabled = personalBestSharingByOwner.get(record.owner_user_id) === true;
+    const sharingLabel = record.owner_user_id === currentUserId
+      ? (sharingEnabled ? 'Sharing with team on' : 'Private to you and admins')
+      : (sharingEnabled ? 'Shared with team' : 'Private');
+    meta.textContent = [ownerName, achievedDate, sharingLabel].filter(Boolean).join(' · ');
     details.append(heading, meta);
     if (record.note) {
       const note = document.createElement('p');
@@ -544,7 +1219,6 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         personalBestForm.elements.namedItem('performance').value = record.performance;
         personalBestForm.elements.namedItem('achieved_on').value = record.achieved_on ?? '';
         personalBestForm.elements.namedItem('note').value = record.note ?? '';
-        personalBestForm.elements.namedItem('share_with_team').checked = record.share_with_team;
         personalBestSubmitLabel.textContent = 'Update personal best';
         cancelPersonalBestEdit.hidden = false;
         personalBestForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -569,7 +1243,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     if (status) setStatus(status, 'Loading personal bests…');
     const { data, error } = await supabaseClient
       .from('athlete_personal_bests')
-      .select('id, owner_user_id, event, performance, achieved_on, note, share_with_team, created_at')
+      .select('id, owner_user_id, event, performance, achieved_on, note, created_at')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('Unable to load athlete personal bests.', error);
@@ -580,6 +1254,23 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       return;
     }
 
+    const { data: preferences, error: preferencesError } = await supabaseClient
+      .from('athlete_personal_best_preferences')
+      .select('user_id, share_with_team');
+    if (preferencesError) {
+      console.error('Unable to load personal-best sharing preferences.', preferencesError);
+      const message = `Could not load team-sharing preferences: ${preferencesError.message}. Run the personal-best profile-sharing migration.`;
+      if (personalBestSharingStatus) setStatus(personalBestSharingStatus, message, 'error');
+      if (myPersonalBestsStatus) setStatus(myPersonalBestsStatus, message, 'error');
+      if (teamPersonalBestsStatus) setStatus(teamPersonalBestsStatus, message, 'error');
+      if (personalBestAdminStatus) setStatus(personalBestAdminStatus, message, 'error');
+      return;
+    }
+    personalBestSharingByOwner.clear();
+    preferences.forEach(preference => personalBestSharingByOwner.set(preference.user_id, preference.share_with_team));
+    const ownSharingEnabled = personalBestSharingByOwner.get(currentUserId) === true;
+    if (personalBestSharingToggle) personalBestSharingToggle.checked = ownSharingEnabled;
+
     if (isAdminPage) {
       const { data: members, error: memberError } = await supabaseClient
         .from('athlete_members')
@@ -589,11 +1280,20 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         setStatus(personalBestAdminStatus, `Personal bests loaded, but athlete names could not be loaded: ${memberError.message}`, 'error');
       }
       const memberNames = new Map((members ?? []).map(member => [member.user_id, member.full_name]));
-      personalBestAdminList.replaceChildren(...data.map(record => makePersonalBestCard(record, {
+      if (currentUserName) memberNames.set(currentUserId, currentUserName);
+      const ownRecords = data.filter(record => record.owner_user_id === currentUserId);
+      renderPaginatedList(myPersonalBestList, myPersonalBestPagination, ownRecords, record => makePersonalBestCard(record, {
+        canEdit: true,
+        canDelete: true,
+      }), 'my-personal-bests');
+      if (myPersonalBestCount) myPersonalBestCount.textContent = `${ownRecords.length} saved ${ownRecords.length === 1 ? 'PB' : 'PBs'}`;
+      if (myPersonalBestsStatus) setStatus(myPersonalBestsStatus, ownRecords.length ? '' : 'You have not added any personal bests yet.');
+      renderPaginatedList(personalBestAdminList, personalBestAdminPagination, data, record => makePersonalBestCard(record, {
         ownerName: memberNames.get(record.owner_user_id) || 'Team member',
+        canEdit: true,
         canDelete: true,
         isAdmin: true,
-      })));
+      }), 'admin-personal-bests');
       if (!memberError) {
         setStatus(personalBestAdminStatus, data.length
           ? `${data.length} ${data.length === 1 ? 'personal best' : 'personal bests'} · private and team-shared`
@@ -603,11 +1303,12 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
 
     const ownRecords = data.filter(record => record.owner_user_id === currentUserId);
-    const sharedRecords = data.filter(record => record.owner_user_id !== currentUserId && record.share_with_team);
-    myPersonalBestList.replaceChildren(...ownRecords.map(record => makePersonalBestCard(record, {
+    const sharedRecords = data.filter(record => record.owner_user_id !== currentUserId
+      && personalBestSharingByOwner.get(record.owner_user_id) === true);
+    renderPaginatedList(myPersonalBestList, myPersonalBestPagination, ownRecords, record => makePersonalBestCard(record, {
       canEdit: true,
       canDelete: true,
-    })));
+    }), 'my-personal-bests');
     myPersonalBestCount.textContent = `${ownRecords.length} saved ${ownRecords.length === 1 ? 'PB' : 'PBs'}`;
     setStatus(myPersonalBestsStatus, ownRecords.length ? '' : 'You have not added any personal bests yet.');
 
@@ -621,9 +1322,9 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
       return;
     }
     const memberNames = new Map(athletes.map(athlete => [athlete.owner_user_id, athlete.full_name]));
-    teamPersonalBestList.replaceChildren(...sharedRecords.map(record => makePersonalBestCard(record, {
+    renderPaginatedList(teamPersonalBestList, teamPersonalBestPagination, sharedRecords, record => makePersonalBestCard(record, {
       ownerName: memberNames.get(record.owner_user_id) || 'Team member',
-    })));
+    }), 'team-personal-bests');
     setStatus(teamPersonalBestsStatus, sharedRecords.length
       ? `${sharedRecords.length} team-shared ${sharedRecords.length === 1 ? 'PB' : 'PBs'}`
       : 'No teammates have shared personal bests yet.');
@@ -662,12 +1363,15 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     const { error } = await supabaseClient.from('athletics_records').delete().eq('id', record.id);
     if (error) {
       console.error('Unable to delete athletics record.', error);
-      setStatus(adminRecordsStatus, `Could not delete record: ${error.message}`, 'error');
+      const category = isCoreRecordType(record.record_type) ? record.record_type : 'other';
+      setStatus(recordListStatuses.get(category), `Could not delete record: ${error.message}`, 'error');
       return;
     }
-    if (recordForm.elements.namedItem('id').value === record.id) resetRecordForm();
+    const category = isCoreRecordType(record.record_type) ? record.record_type : 'other';
+    const form = recordForms.get(category);
+    if (form.elements.namedItem('id').value === record.id) resetRecordForm(form);
     await loadAthleticsRecords();
-    setStatus(adminRecordsStatus, 'Record deleted.');
+    setStatus(recordListStatuses.get(category), 'Record deleted.');
   }
 
   async function loadMembershipRequests() {
@@ -684,7 +1388,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
 
     membershipRequestCount.textContent = `${data.length} pending ${data.length === 1 ? 'request' : 'requests'}`;
-    membershipRequestList.replaceChildren();
+    renderPaginatedList(membershipRequestList, membershipPagination, data, makeMembershipRequestCard, 'membership-requests');
     if (data.length === 0) {
       setStatus(membershipStatus, 'No pending membership requests.');
       return;
@@ -758,13 +1462,14 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
     if (admin) {
       currentRole = 'admin';
+      startPersonalBestSharingWatcher();
       authCard.hidden = true;
       membershipPending.hidden = true;
       athleteDashboard.hidden = false;
       membershipAdmin.hidden = !isAdminPage;
       if (recordAdmin) recordAdmin.hidden = !isAdminPage;
       if (personalBestAdmin) personalBestAdmin.hidden = !isAdminPage;
-      if (personalBestSection) personalBestSection.hidden = true;
+      if (personalBestSection) personalBestSection.hidden = false;
       if (adminDashboardLink) adminDashboardLink.hidden = isAdminPage;
       document.querySelector('.dashboard-heading .eyebrow').lastChild.textContent = isAdminPage
         ? ' ATHLETICS OPERATIONS · ADMIN'
@@ -774,8 +1479,8 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         : 'Manage athlete profiles.';
       profileEditor.hidden = false;
       setFormMode();
-      const tasks = [loadProfiles(), loadAthleticsRecords()];
-      if (isAdminPage) tasks.push(loadMembershipRequests(), loadPersonalBests());
+      const tasks = [loadProfiles(), loadAthleticsRecords(), loadPersonalBests()];
+      if (isAdminPage) tasks.push(loadMembershipRequests());
       await Promise.all(tasks);
       return;
     }
@@ -830,6 +1535,7 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
 
     currentRole = 'member';
+    startPersonalBestSharingWatcher();
     authCard.hidden = true;
     membershipPending.hidden = true;
     athleteDashboard.hidden = false;
@@ -935,6 +1641,27 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
 
   document.querySelector('#refresh-button').addEventListener('click', loadProfiles);
   document.querySelector('#refresh-requests-button').addEventListener('click', loadMembershipRequests);
+  addProfileButton?.addEventListener('click', () => {
+    setFormMode();
+    athleteForm.hidden = false;
+    addProfileButton.hidden = true;
+    athleteForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    athleteForm.elements.namedItem('full_name').focus();
+  });
+  for (const [category, button] of addRecordButtons) {
+    button.addEventListener('click', () => {
+      recordCategoryTabs.querySelector(`[data-record-category="${category}"]`).click();
+      const form = recordForms.get(category);
+      resetRecordForm(form);
+      form.elements.namedItem('team').value = selectedAdminRecordTeams.get(category) ?? 'boys';
+      const teamLabel = form.querySelector('[data-record-form-team]');
+      if (teamLabel) teamLabel.textContent = form.elements.namedItem('team').value === 'boys' ? 'Boys' : 'Girls';
+      form.hidden = false;
+      button.hidden = true;
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (category === 'other' ? form.elements.namedItem('record_type') : form.elements.namedItem('event')).focus();
+    });
+  }
   if (refreshRecordsButton) refreshRecordsButton.addEventListener('click', loadAthleticsRecords);
   if (refreshAdminRecordsButton) refreshAdminRecordsButton.addEventListener('click', loadAthleticsRecords);
   if (refreshPersonalBestsButton) refreshPersonalBestsButton.addEventListener('click', loadPersonalBests);
@@ -987,41 +1714,58 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     }
 
     setFormMode();
-    setStatus(formStatus, 'Profile saved.', 'success');
     await loadProfiles();
+    setStatus(isAdminPage ? directoryStatus : formStatus, 'Profile saved.', 'success');
   });
 
   if (personalBestForm) {
+    personalBestSharingToggle?.addEventListener('change', savePersonalBestSharingPreference);
     personalBestForm.addEventListener('submit', async event => {
       event.preventDefault();
-      if (currentRole !== 'member') {
-        setStatus(personalBestFormStatus, 'Only an approved athlete can add personal bests.', 'error');
+      if (!['member', 'admin'].includes(currentRole)) {
+        setStatus(personalBestFormStatus, 'Sign in with an approved team or admin account to manage personal bests.', 'error');
         return;
       }
 
       const formData = new FormData(personalBestForm);
       const personalBest = {
-        owner_user_id: currentUserId,
         event: String(formData.get('event')),
         performance: String(formData.get('performance')).trim(),
         achieved_on: String(formData.get('achieved_on')) || null,
         note: String(formData.get('note')).trim(),
-        share_with_team: formData.get('share_with_team') === 'on',
       };
       const personalBestId = String(formData.get('id'));
+      if (!personalBestId) personalBest.owner_user_id = currentUserId;
       const submitButton = personalBestForm.querySelector('[type="submit"]');
       submitButton.disabled = true;
       setStatus(personalBestFormStatus, personalBestId ? 'Updating personal best…' : 'Saving personal best…');
-      let query = personalBestId
-        ? supabaseClient.from('athlete_personal_bests').update(personalBest)
-          .eq('id', personalBestId)
-          .eq('owner_user_id', currentUserId)
-        : supabaseClient.from('athlete_personal_bests').insert(personalBest);
-      const { error } = await query;
+      let query;
+      if (personalBestId) {
+        query = supabaseClient.from('athlete_personal_bests').update(personalBest)
+          .eq('id', personalBestId);
+        if (currentRole !== 'admin') query = query.eq('owner_user_id', currentUserId);
+        query = query.select('id').maybeSingle();
+      } else {
+        query = supabaseClient.from('athlete_personal_bests').insert(personalBest);
+      }
+      let result;
+      try {
+        result = await query;
+      } catch (error) {
+        submitButton.disabled = false;
+        console.error('The personal-best save request failed.', error);
+        setStatus(personalBestFormStatus, `Could not save personal best: ${error.message || 'network error'}`, 'error');
+        return;
+      }
       submitButton.disabled = false;
+      const { data: savedPersonalBest, error } = result;
       if (error) {
         console.error('Unable to save athlete personal best.', error);
         setStatus(personalBestFormStatus, `Could not save personal best: ${error.message}`, 'error');
+        return;
+      }
+      if (personalBestId && !savedPersonalBest) {
+        setStatus(personalBestFormStatus, 'No personal best was updated. Refresh the list and check that you have permission to edit this entry.', 'error');
         return;
       }
 
@@ -1032,26 +1776,32 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
     cancelPersonalBestEdit.addEventListener('click', resetPersonalBestForm);
   }
 
-  if (recordForm) {
-    recordForm.addEventListener('submit', async event => {
+  for (const [category, form] of recordForms) {
+    form.addEventListener('submit', async event => {
       event.preventDefault();
       if (currentRole !== 'admin') {
-        setStatus(recordFormStatus, 'Only an admin can add records.', 'error');
+        setStatus(form.querySelector('[data-record-form-status]'), 'Only an admin can add records.', 'error');
         return;
       }
 
-      const formData = new FormData(recordForm);
+      const formData = new FormData(form);
       const selectedType = String(formData.get('record_type'));
       const customTypeName = String(formData.get('custom_record_type') ?? '').trim();
       const customTypeSlug = customTypeName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '');
-      const recordType = selectedType === 'custom'
-        ? (/^[a-z][a-z0-9_]{1,39}$/.test(customTypeSlug) ? customTypeSlug : '')
-        : selectedType;
+      const recordType = category === 'other'
+        ? selectedType === 'custom'
+          ? (/^[a-z][a-z0-9_]{1,39}$/.test(customTypeSlug) ? customTypeSlug : '')
+          : selectedType
+        : category;
       if (!recordType) {
-        setStatus(recordFormStatus, 'Enter a custom category name using at least two English letters or numbers.', 'error');
+        setStatus(form.querySelector('[data-record-form-status]'), 'Enter a custom category name using at least two English letters or numbers.', 'error');
+        return;
+      }
+      if (category !== 'other' && recordType !== category) {
+        setStatus(form.querySelector('[data-record-form-status]'), 'The selected category does not match this record form. Reopen the category and try again.', 'error');
         return;
       }
       const record = {
@@ -1076,30 +1826,34 @@ if (!config || !config.url || config.url.includes('YOUR_PROJECT_ID') || !config.
         `Performance: ${record.performance}`,
       ].join('\n');
       if (!window.confirm(confirmation)) {
-        setStatus(recordFormStatus, recordId ? 'Update cancelled; no changes were saved.' : 'Record was not added.');
+        setStatus(form.querySelector('[data-record-form-status]'), recordId ? 'Update cancelled; no changes were saved.' : 'Record was not added.');
         return;
       }
 
-      const submitButton = recordForm.querySelector('[type="submit"]');
+      const submitButton = form.querySelector('[type="submit"]');
       submitButton.disabled = true;
-      setStatus(recordFormStatus, recordId ? 'Updating record…' : 'Adding record…');
+      setStatus(form.querySelector('[data-record-form-status]'), recordId ? 'Updating record…' : 'Adding record…');
       const query = recordId
-        ? supabaseClient.from('athletics_records').update(record).eq('id', recordId)
+        ? supabaseClient.from('athletics_records').update(record).eq('id', recordId).select('id').maybeSingle()
         : supabaseClient.from('athletics_records').insert(record);
-      const { error } = await query;
+      const { data: savedRecord, error } = await query;
       submitButton.disabled = false;
       if (error) {
         console.error('Unable to save athletics record.', error);
-        setStatus(recordFormStatus, `Could not save record: ${error.message}`, 'error');
+        setStatus(form.querySelector('[data-record-form-status]'), `Could not save record: ${error.message}`, 'error');
+        return;
+      }
+      if (recordId && !savedRecord) {
+        console.warn('The athletics record update matched no accessible record.', recordId);
+        setStatus(form.querySelector('[data-record-form-status]'), 'No record was updated. Refresh the records and check that you are signed in as an admin.', 'error');
         return;
       }
 
-      resetRecordForm();
-      setStatus(recordFormStatus, recordId ? 'Record updated.' : 'Record added.', 'success');
+      resetRecordForm(form);
       await loadAthleticsRecords();
-      setStatus(adminRecordsStatus, recordId ? 'Record updated.' : 'Record added.');
+      setStatus(recordListStatuses.get(category), recordId ? 'Record updated.' : 'Record added.', 'success');
     });
-    cancelRecordEditButton.addEventListener('click', resetRecordForm);
+    form.querySelector('[data-cancel-record-form]').addEventListener('click', () => resetRecordForm(form));
   }
 
   async function deleteProfile(id, name) {
